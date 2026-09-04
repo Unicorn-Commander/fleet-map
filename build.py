@@ -177,6 +177,9 @@ for hid, m in hosts.items():
         m["online"] = None
     m["stacks"] = {k: v for k, v in m["stacks"].items()}
     m["models"] = t.get("models", []); m["hardware"] = t.get("hardware", {}); m["physical"] = t.get("physical", {})
+    # viewer glyph overrides: glyph = symbol name (rack|tower|mini|pi|laptop|mac|vps|panel), icon = URL/path of a sticker image (PNG w/ alpha)
+    if t.get("glyph"): m["glyph"] = t["glyph"]
+    if t.get("icon"): m["icon"] = t["icon"]
     units = []
     for u in m.get("units", []):
         cat, layer = classify(u)
