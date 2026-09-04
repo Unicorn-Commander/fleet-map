@@ -197,7 +197,11 @@ for hid, m in hosts.items():
     if hid in GPU_HOSTS or hid in {"srv981531"}: ht.add("saas-inference")
     m["tags_overlay"] = sorted(ht)
 
-out = {"generatedAt": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
+# drift: nodes the tailnet knows that topology.json does not (new box, renamed box, missing alias)
+unmapped = sorted({name for name in hs if canon(name) not in topo["hosts"]})
+if unmapped:
+    print("UNMAPPED tailnet nodes (add to topology.json hosts/aliases):", ", ".join(unmapped), file=sys.stderr)
+out = {"generatedAt": datetime.datetime.now().astimezone().isoformat(timespec="seconds"), "unmapped": unmapped,
        "sites": topo["sites"], "externals": topo["externals"], "links": topo["links"],
        "tailnetMembers": topo["tailnetMembers"], "layers": topo["layers"], "linkLayer": topo["linkLayer"], "overlays": topo["overlays"], "privacy": topo.get("privacy", {}), "lanMembers": topo["lanMembers"],
        "hosts": hosts, "containers": containers, "routes": routes}
