@@ -49,20 +49,30 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
 .dot{cursor:pointer;stroke:#0b1020;stroke-width:.8}.dot.dim{opacity:.1}.dot.hit{stroke:#fff;stroke-width:2}.site-band{fill-opacity:.12}.site-band-label{font-size:11px;font-weight:600;letter-spacing:.08em}
 .lanes-hidden{display:none!important}
 #crumbs{position:absolute;left:12px;top:10px;z-index:6;display:flex;gap:6px;align-items:center;font-size:13px}#crumbs span.c{background:#111a2ecc;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;backdrop-filter:blur(6px)}#crumbs span.c:hover{border-color:var(--accent)}#crumbs span.c.cur{background:#1f3b7a;border-color:var(--accent);cursor:default}#crumbs .sep{color:var(--muted)}
-#scopehelp{position:absolute;right:12px;top:10px;z-index:6;color:var(--muted);font-size:12px;background:#111a2ecc;border:1px solid var(--line);border-radius:8px;padding:5px 10px}
+#scopehelp{position:absolute;right:12px;bottom:14px;max-width:48%;z-index:6;color:var(--muted);font-size:12px;background:#111a2ecc;border:1px solid var(--line);border-radius:8px;padding:5px 10px}
 .link.dep{stroke:#38bdf8;stroke-width:1.4;stroke-opacity:.8}.node.portal circle.body{fill:#1a1f35;stroke:#94a3b8;stroke-dasharray:4 2}.node.portal text{fill:#cbd5e1}
 .chk .open{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:4px}.chk .open:hover{color:#fff;border-color:var(--accent)}
 .node.ov circle.body{stroke-width:3.5;filter:drop-shadow(0 0 6px var(--ovc))}.node.ovdim{opacity:.1}.dot.ovdim{opacity:.08}.dot.ov{stroke:var(--ovc);stroke-width:2.5}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}.psite{grid-column:1/-1;margin-top:10px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--line);padding-bottom:4px}
 .pcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}.pcard:hover{border-color:var(--accent)}.pcard h4{margin:0 0 4px;font-size:14px;display:flex;gap:8px;align-items:center}
 .pcard .st{width:9px;height:9px;border-radius:50%;display:inline-block}.pcard .row{display:flex;gap:6px;font-size:11.5px;padding:2px 0;color:#cbd5e1}.pcard .row b{color:var(--muted);font-weight:500;width:70px;flex:none}.pcard .bar{display:flex;height:5px;border-radius:3px;overflow:hidden;margin:6px 0}
+
+#g3d{position:absolute;inset:0}#g3d canvas{display:block;outline:none}
+#app{background:var(--bg)}aside{background:linear-gradient(180deg,#0f1729 0%,#0c1324 100%);backdrop-filter:blur(10px)}
+h1{font-size:17px;letter-spacing:.01em;background:linear-gradient(90deg,#c7d7ff,#a78bfa 55%,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 22px #7aa2ff33}
+h1 small{-webkit-text-fill-color:var(--muted);color:var(--muted)}
+.seg span.on{background:linear-gradient(90deg,#1f3b7a,#3b1f7a);box-shadow:inset 0 0 0 1px #7aa2ff55}
+.btn.on{background:linear-gradient(90deg,#1f3b7a,#3b1f7a)}
+#hud3d{position:absolute;left:12px;bottom:14px;z-index:6;display:none;gap:6px;align-items:center;font-size:11.5px;color:var(--muted);background:#0b1020aa;border:1px solid var(--line);border-radius:10px;padding:6px 10px;backdrop-filter:blur(8px)}
+#hud3d kbd{margin:0 2px}
+#loading3d{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:7;color:#c7d7ff;font-size:14px;letter-spacing:.2em;text-transform:uppercase;pointer-events:none;text-shadow:0 0 18px #7aa2ff}
 </style></head>
 <body><div id="app">
 <aside id="left">
  <h1>🦄 Fleet Map <small>Magic Unicorn distributed system</small></h1>
  <div id="stats"></div>
  <div><span class="btn" id="bPriv" title="Live-safe: hides IPs, ports, routes, client names; sites at city level">🔒 Privacy mode</span></div>
- <div class="seg" id="viewSeg"><span class="on" data-v="graph">Graph</span><span data-v="lanes">Layers view</span><span data-v="phys">Physical</span></div>
+ <div class="seg" id="viewSeg"><span data-v="3d">🌌 3D</span><span class="on" data-v="graph">Graph</span><span data-v="lanes">Layers view</span><span data-v="phys">Physical</span></div>
  <h2>Search</h2>
  <input id="q" type="search" placeholder="host, container, image, model, hostname, port… (press /)">
  <h2>Layers <span style="float:right;font-weight:400;text-transform:none;letter-spacing:0"><span class="solo" id="allLayers" style="cursor:pointer">all</span></span></h2>
@@ -71,17 +81,17 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
  <div id="overlays"></div>
  <h2>Actions</h2>
  <span class="btn" id="bExpandHosts">Expand all hosts</span><span class="btn" id="bCollapse">Collapse all</span>
- <span class="btn" id="bFit">Fit</span><span class="btn" id="bPhys">⏸ physics</span><span class="btn" id="bUrls">Show public hostnames</span>
+ <span class="btn" id="bFit">Fit</span><span class="btn on" id="bSpin" title="auto-orbit the 3D view">⟳ spin</span><span class="btn on" id="bGlow" title="bloom / glow post-processing in 3D">✨ glow</span><span class="btn" id="bPhys">⏸ physics</span><span class="btn" id="bUrls">Show public hostnames</span>
  <div style="margin-top:6px;color:var(--muted)">Expand hosts by: <span class="seg" id="groupSeg"><span class="on" data-g="function">function</span><span data-g="stack">compose stack</span></span></div>
  <h2>Link kinds</h2><div id="kinds"></div>
  <h2>Sites</h2><div id="sites"></div>
  <h2>Tips</h2>
  <div style="color:var(--muted)">Click a host → its inner layers (hardware → OS → runtime → services by function). Drag to pin, double-click to unpin. <kbd>/</kbd> search, <kbd>Esc</kbd> clear. Hover a link for what it carries. Re-collect live data with <code>./collect.sh</code>.</div>
 </aside>
-<div id="graph"><svg id="svg"></svg><svg id="lanes" class="lanes-hidden"></svg><div id="phys" class="lanes-hidden" style="position:absolute;inset:0;overflow:auto;padding:16px"></div><div id="tip"></div><div id="toast"></div><div id="crumbs"></div><div id="scopehelp"></div><div id="privbanner" style="display:none;position:absolute;left:12px;top:50px;background:#3b0764cc;border:1px solid #d946ef;color:#f5d0fe;padding:5px 10px;border-radius:8px;font-weight:600;z-index:6">🔒 PRIVACY MODE — IPs, ports, routes and client identifiers hidden</div></div>
+<div id="graph"><div id="g3d" class="lanes-hidden"></div><div id="loading3d">rendering fleet…</div><div id="hud3d"><span>drag</span> orbit · <span>scroll</span> zoom · <span>right-drag</span> pan · <span>click</span> select · <span>double-click</span> open</div><svg id="svg"></svg><svg id="lanes" class="lanes-hidden"></svg><div id="phys" class="lanes-hidden" style="position:absolute;inset:0;overflow:auto;padding:16px"></div><div id="tip"></div><div id="toast"></div><div id="crumbs"></div><div id="scopehelp"></div><div id="privbanner" style="display:none;position:absolute;left:12px;top:50px;background:#3b0764cc;border:1px solid #d946ef;color:#f5d0fe;padding:5px 10px;border-radius:8px;font-weight:600;z-index:6">🔒 PRIVACY MODE — IPs, ports, routes and client identifiers hidden</div></div>
 <aside id="right"><div id="detail"><h3>Click anything</h3><div class="k">Hosts show their inner layers: hardware, OS, runtime, and every service grouped by function (AI models, apps, data, ingress…). Containers show image, ports, public hostnames. Links show what flows over them.</div></div></aside>
 </div>
-<script src="d3.v7.min.js"></script><script src="data.js"></script>
+<script src="d3.v7.min.js"></script><script src="vendor/fleet3d.bundle.js"></script><script src="data.js"></script>
 <script>
 const F=window.FLEET; const LAYERS=F.layers; const LCOLOR=Object.fromEntries(LAYERS.map(l=>[l.id,l.color])); const LIDX=Object.fromEntries(LAYERS.map((l,i)=>[l.id,i]));
 const KINDS={dep:'compose depends_on',edge:'Internet edge',route:'Traefik → upstream',auth:'SSO / Keycloak',lane:'Inference lanes',stream:'Audio/video streams',mail:'Mail',storage:'Backups / git',tailnet:'Tailnet membership',lan:'Lab LAN',url:'Public hostnames',member:'host → group → container'};
@@ -151,12 +161,13 @@ svg.append('defs').append('marker').attr('id','arrow').attr('viewBox','0 -4 8 8'
 const zoom=d3.zoom().scaleExtent([.12,6]).on('zoom',e=>gRoot.attr('transform',e.transform)); svg.call(zoom);
 const W=()=>document.getElementById('graph').clientWidth,H=()=>document.getElementById('graph').clientHeight;
 const siteAnchor={edge:{x:0,y:-1},hq:{x:1,y:.15},clinic:{x:.9,y:1},'cloud-us':{x:-.55,y:.75},'cloud-br':{x:-.2,y:1.05},shafen:{x:-1,y:-.2},mobile:{x:-.35,y:-.15}}; for(const k of Object.keys(F.sites)) siteAnchor[k]=siteAnchor[k]||{x:0,y:0};
-const sim=d3.forceSimulation().force('charge',d3.forceManyBody().strength(d=>d.type==='container'?-40:d.type==='group'?-140:-420)).force('collide',d3.forceCollide().radius(d=>d.r+6).iterations(2))
- .force('link',d3.forceLink().id(d=>d.id).distance(l=>{const sc=scope.type==='host'||scope.type==='group'; if(l.kind==='member') return sc?(l.target.type==='container'?130:170):(l.target.type==='container'?26:64); return l.kind==='url'?40:l.kind==='dep'?60:l.kind==='lan'?120:170;}).strength(l=>{const sc=scope.type==='host'||scope.type==='group'; return l.kind==='member'?(sc?.15:.9):l.kind==='dep'?.08:l.kind==='lan'?.02:l.kind==='tailnet'?.05:(sc?.05:.25);}))
+const sim=d3.forceSimulation().force('charge',d3.forceManyBody().strength(d=>d.type==='container'?-60:d.type==='group'?-210:-680)).force('collide',d3.forceCollide().radius(d=>d.r+10).iterations(2))
+ .force('link',d3.forceLink().id(d=>d.id).distance(l=>{const sc=scope.type==='host'||scope.type==='group'; if(l.kind==='member') return sc?(l.target.type==='container'?130:170):(l.target.type==='container'?38:88); return l.kind==='url'?48:l.kind==='dep'?72:l.kind==='lan'?150:220;}).strength(l=>{const sc=scope.type==='host'||scope.type==='group'; return l.kind==='member'?(sc?.15:.9):l.kind==='dep'?.08:l.kind==='lan'?.02:l.kind==='tailnet'?.05:(sc?.05:.25);}))
  .force('x',d3.forceX(d=>W()/2+siteAnchor[d.site].x*W()*.28).strength(d=>scope.type==='fleet'||scope.type==='layer'?(d.type==='host'||d.type==='external'?.18:.02):0)).force('y',d3.forceY(d=>H()/2+siteAnchor[d.site].y*H()*.3).strength(d=>scope.type==='fleet'||scope.type==='layer'?(d.type==='host'||d.type==='external'?.18:.02):0))
  .force('radial',d3.forceRadial(d=>{const n=cur.nodes.filter(x=>x.ring===2).length; const r2=Math.max(300,n*6.5); const n1=cur.nodes.filter(x=>x.ring===1).length; const r1=scope.type==='group'?Math.max(170,n1*7):170; return [0,r1,r2,r2+160][d.ring||0]||0;},0,0).strength(d=>scope.type==='host'||scope.type==='group'?(d.ring?.9:0):0));
 let nodeSel,linkSel,cur={nodes:[],links:[]}; const pos={}; const arc=d3.arc();
-function render(){ const g=buildGraph(); const SK=scopeKey(); sim.force('radial').x(W()/2).y(H()/2);
+function render(){ if(view==='3d'&&window.render3D) return render3D(); render2D(); }
+function render2D(){ const g=buildGraph(); const SK=scopeKey(); sim.force('radial').x(W()/2).y(H()/2);
   for(const n of g.nodes){const p=pos[SK+'|'+n.id]; if(p){n.x=p.x;n.y=p.y;n.fx=p.fx;n.fy=p.fy;} else if(n.host&&pos[SK+'|'+n.host]){n.x=pos[SK+'|'+n.host].x+(Math.random()-.5)*40;n.y=pos[SK+'|'+n.host].y+(Math.random()-.5)*40;} else {n.x=W()/2+siteAnchor[n.site].x*W()*.28+(Math.random()-.5)*80;n.y=H()/2+siteAnchor[n.site].y*H()*.3+(Math.random()-.5)*80;}}
   for(const n of g.nodes) if(n.pinned){n.fx=W()/2;n.fy=H()/2;n.x=n.fx;n.y=n.fy;}
   if(scope.type==='host'||scope.type==='group') layoutRadial(g);
@@ -184,7 +195,7 @@ function render(){ const g=buildGraph(); const SK=scopeKey(); sim.force('radial'
   nodeSel.classed('ov',n=>ovActive()&&(n.type==='host'?ovHit(n.data.tags_overlay):n.type==='container'?ovHit(n.data.tags):false)).classed('ovdim',n=>ovActive()&&!(n.type==='host'?ovHit(n.data.tags_overlay):n.type==='container'?ovHit(n.data.tags):n.type==='external'?(ovOn['saas-inference']&&n.id==='cloud-llm')||(ovOn['saas-platform']&&['cloudflare','internet','tailnet'].includes(n.id)):n.type==='group'?n.items.some(i=>ovHit(itemsOf(i).tags)):false)).style('--ovc',n=>{const t=(n.type==='host'?n.data.tags_overlay:n.type==='container'?n.data.tags:[])||[]; const k=t.find(x=>ovOn[x]); return k?OVCOLOR[k]:null;});
   linkSel.classed('dim',l=>ovActive()&&!((ovOn['saas-inference']&&l.kind==='lane')||(ovOn['saas-platform']&&['edge','route','auth'].includes(l.kind))||(ovOn.prod&&['edge','route','mail','stream'].includes(l.kind))));
   sim.nodes(g.nodes); sim.force('link').links(g.links); sim.alpha(.6).restart(); if(!physics) sim.stop(); stats(); applySearch(); }
-sim.on('tick',()=>{linkSel.attr('d',l=>{const dx=l.target.x-l.source.x,dy=l.target.y-l.source.y,dr=Math.hypot(dx,dy)*(l.kind==='lan'||l.kind==='member'?0:1.6);return dr?`M${l.source.x},${l.source.y}A${dr},${dr} 0 0,1 ${l.target.x},${l.target.y}`:`M${l.source.x},${l.source.y}L${l.target.x},${l.target.y}`;});
+sim.on('tick',()=>{if(!linkSel||view!=='graph') return; linkSel.attr('d',l=>{const dx=l.target.x-l.source.x,dy=l.target.y-l.source.y,dr=Math.hypot(dx,dy)*(l.kind==='lan'||l.kind==='member'?0:1.6);return dr?`M${l.source.x},${l.source.y}A${dr},${dr} 0 0,1 ${l.target.x},${l.target.y}`:`M${l.source.x},${l.source.y}L${l.target.x},${l.target.y}`;});
   nodeSel.attr('transform',d=>{const k=scopeKey()+'|'+d.id;pos[k]=pos[k]||{};pos[k].x=d.x;pos[k].y=d.y;return `translate(${d.x},${d.y})`;}); hulls();});
 
 // deterministic sunburst layout for host/group scopes: groups on ring 1 in sectors sized by item count, their containers on ring 2 inside the sector, portals/ghosts on ring 3
@@ -240,7 +251,7 @@ function detail(d){ if(d.type==='host'){const h=d.data;
  else { det.innerHTML=`<h3>${esc(d.label)}</h3><div>${esc(d.data.note||'')}</div><h2>links</h2>${cur.links.filter(l=>l.source.id===d.id||l.target.id===d.id).map(l=>`<div class=crow>${esc(KINDS[l.kind])}: ${name(l.source)} → ${name(l.target)}<br><small>${esc(l.label)}</small></div>`).join('')}`; } }
 function catOfUnit(h,u){ const x=(h.unit_items||[]).find(i=>i.name===u); return x?x.cat:'unit'; }
 function detailLink(l){ det.innerHTML=`<h3>${esc(KINDS[l.kind])}</h3><div class=k>layer <span style="color:${LCOLOR[l.layer]}">${esc(l.layer)}</span></div><div>${name(l.source)} → ${name(l.target)}</div><div style="margin-top:8px">${esc(l.label)}</div>`; }
-function focus(id){ const n=cur.nodes.find(x=>x.id===id); if(!n) return; nodeSel.classed('hit',x=>x.id===id); const t=d3.zoomTransform(svg.node()); svg.transition().duration(500).call(zoom.transform,d3.zoomIdentity.translate(W()/2-n.x*t.k,H()/2-n.y*t.k).scale(t.k)); }
+function focus(id){ if(view==='3d'){focus3D(id);return;} const n=cur.nodes.find(x=>x.id===id); if(!n) return; nodeSel.classed('hit',x=>x.id===id); const t=d3.zoomTransform(svg.node()); svg.transition().duration(500).call(zoom.transform,d3.zoomIdentity.translate(W()/2-n.x*t.k,H()/2-n.y*t.k).scale(t.k)); }
 // ---------------- layers (swimlane) view ----------------
 const lsvg=d3.select('#lanes'), lRoot=lsvg.append('g'); const lzoom=d3.zoom().scaleExtent([.2,4]).on('zoom',e=>lRoot.attr('transform',e.transform)); lsvg.call(lzoom);
 function renderLanes(){ lRoot.selectAll('*').remove(); const order=Object.keys(F.sites); const hosts=Object.values(F.hosts).filter(h=>siteOn[h.site]).sort((a,b)=>order.indexOf(a.site)-order.indexOf(b.site)||(b.containers.length-a.containers.length));
@@ -277,22 +288,22 @@ function renderPhys(){ const el=document.getElementById('phys'); const order=Obj
 const crumbEl=document.getElementById('crumbs'), helpEl=document.getElementById('scopehelp'); const scopeStack=[];
 function crumbs(){ const parts=[{l:'🦄 Fleet',s:{type:'fleet'}}]; if(scope.type==='layer') parts.push({l:LAYERS[LIDX[scope.id]].label,s:scope}); if(scope.type==='host') parts.push({l:P(hostLabel(scope.id)),s:scope}); if(scope.type==='group'){ parts.push({l:P(hostLabel(scope.host)),s:{type:'host',id:scope.host}}); parts.push({l:scope.id.split('::f::')[1],s:scope}); }
   crumbEl.innerHTML=parts.map((p,i)=>`<span class="c${i===parts.length-1?' cur':''}" data-i="${i}">${esc(p.l)}</span>${i<parts.length-1?'<span class=sep>›</span>':''}`).join(''); crumbEl.querySelectorAll('span.c').forEach(el=>el.onclick=()=>{const p=parts[+el.dataset.i]; if(p.s!==scope) openScope(p.s);});
-  helpEl.textContent=scope.type==='fleet'?'double-click a host, group or layer to open it in its own graph · shift+double-click unpins':scope.type==='host'?'this host only: function groups → services, blue = compose depends_on, dashed = links to other hosts (double-click to jump) · Esc = back':scope.type==='group'?'one function group with its dependencies (faded = outside the group) · Esc = back':'one layer across the fleet · double-click a host to open it · Esc = back'; }
-function openScope(sc){ if(JSON.stringify(sc)===JSON.stringify(scope)) return; scopeStack.push(scope); scope=sc; if(sc.type!=='fleet') setView('graph'); render(); sim.alpha(1); sim.tick(160); sim.alpha(.3).restart(); crumbs(); setTimeout(fit,400); if(sc.type==='host') detail(hNode(sc.id)); if(sc.type==='layer'){ const l=LAYERS[LIDX[sc.id]]; det.innerHTML=`<h3><span class=sw style="background:${l.color};display:inline-block;width:12px;height:12px;border-radius:3px"></span> ${esc(l.label)}</h3><div>${esc(l.desc)}</div><div class=k style="margin-top:6px">${layerCount(sc.id)} services across ${Object.values(F.hosts).filter(h=>(h.byLayer||{})[sc.id]).length} hosts</div>`; } }
-function back(){ const prev=scopeStack.pop()||{type:'fleet'}; scope=prev; render(); sim.alpha(1); sim.tick(120); sim.alpha(.3).restart(); crumbs(); setTimeout(fit,400); }
+  helpEl.textContent=(view==='3d'?'3D · ':'')+(scope.type==='fleet'?'double-click a host, group or layer to open it in its own graph · shift+double-click unpins':scope.type==='host'?'this host only: function groups → services, blue = compose depends_on, dashed = links to other hosts (double-click to jump) · Esc = back':scope.type==='group'?'one function group with its dependencies (faded = outside the group) · Esc = back':'one layer across the fleet · double-click a host to open it · Esc = back'); }
+function openScope(sc){ if(JSON.stringify(sc)===JSON.stringify(scope)) return; scopeStack.push(scope); scope=sc; if(sc.type!=='fleet'&&view!=='3d') setView('graph'); render(); if(view!=='3d'){ sim.alpha(1); sim.tick(160); sim.alpha(.3).restart(); setTimeout(fit,400);} crumbs(); if(sc.type==='host') detail(hNode(sc.id)); if(sc.type==='layer'){ const l=LAYERS[LIDX[sc.id]]; det.innerHTML=`<h3><span class=sw style="background:${l.color};display:inline-block;width:12px;height:12px;border-radius:3px"></span> ${esc(l.label)}</h3><div>${esc(l.desc)}</div><div class=k style="margin-top:6px">${layerCount(sc.id)} services across ${Object.values(F.hosts).filter(h=>(h.byLayer||{})[sc.id]).length} hosts</div>`; } }
+function back(){ const prev=scopeStack.pop()||{type:'fleet'}; scope=prev; render(); if(view!=='3d'){ sim.alpha(1); sim.tick(120); sim.alpha(.3).restart(); setTimeout(fit,400);} crumbs(); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&document.activeElement!==q&&scope.type!=='fleet') back(); });
-function setView(v){ view=v; document.querySelectorAll('#viewSeg span').forEach(s=>s.classList.toggle('on',s.dataset.v===v)); document.getElementById('lanes').classList.toggle('lanes-hidden',v!=='lanes'); document.getElementById('phys').classList.toggle('lanes-hidden',v!=='phys'); document.getElementById('svg').classList.toggle('lanes-hidden',v!=='graph'); if(v==='phys'){renderPhys();return;} if(v==='lanes'){renderLanes(); const tw=lanesW||3000; lsvg.call(lzoom.transform,d3.zoomIdentity.translate(10,10).scale(Math.max(.62,Math.min(1,(W()-20)/tw))));} else {render();} }
+function setView(v){ view=v; try{localStorage.setItem('fleetmap-view',v);}catch(e){} document.querySelectorAll('#viewSeg span').forEach(s=>s.classList.toggle('on',s.dataset.v===v)); document.getElementById('lanes').classList.toggle('lanes-hidden',v!=='lanes'); document.getElementById('phys').classList.toggle('lanes-hidden',v!=='phys'); document.getElementById('svg').classList.toggle('lanes-hidden',v!=='graph'); document.getElementById('g3d').classList.toggle('lanes-hidden',v!=='3d'); document.getElementById('hud3d').style.display=v==='3d'?'flex':'none'; crumbs(); if(v==='3d'){render3D();return;} if(v==='phys'){renderPhys();return;} if(v==='graph'){render(); setTimeout(fit,900); return;} if(v==='lanes'){renderLanes(); const tw=lanesW||3000; lsvg.call(lzoom.transform,d3.zoomIdentity.translate(10,10).scale(Math.max(.62,Math.min(1,(W()-20)/tw))));} else {render();} }
 document.querySelectorAll('#viewSeg span').forEach(s=>s.onclick=()=>setView(s.dataset.v));
 // ---------------- search ----------------
 const q=document.getElementById('q');
 function applySearch(){ const s=q.value.trim().toLowerCase(); const toast=document.getElementById('toast');
-  if(!s){ if(nodeSel){nodeSel.classed('hit',false).classed('dim',false);linkSel.classed('dim',false);} lRoot.selectAll('.dot').classed('hit',false).classed('dim',false); toast.style.display='none'; return; }
+  if(!s){ if(nodeSel){nodeSel.classed('hit',false).classed('dim',false);linkSel.classed('dim',false);} if(view==='3d'&&window.hit3D) hit3D(null); lRoot.selectAll('.dot').classed('hit',false).classed('dim',false); toast.style.display='none'; return; }
   const hitHosts=new Set(); for(const c of F.containers){ if([c.name,c.image,c.stack,c.cat,c.layer,...c.ports,...c.hostnames].join(' ').toLowerCase().includes(s)) hitHosts.add(c.host); }
   for(const [id,h] of Object.entries(F.hosts)){ if([id,h.display,h.role,h.os,h.kern,...(h.ips||[]),h.ts,...(h.listen||[]).map(p=>':'+p),...(h.units||[]),...(h.hostnames||[]),...(h.gpu||[]),...(h.models||[]),JSON.stringify(h.hardware||{})].join(' ').toLowerCase().includes(s)) hitHosts.add(id); }
   const hit=n=>n.type==='host'?hitHosts.has(n.id):n.type==='container'?[n.data.name,n.data.image,n.data.cat,...(n.data.ports||[]),...(n.data.hostnames||[])].join(' ').toLowerCase().includes(s):n.label.toLowerCase().includes(s);
-  if(nodeSel){ nodeSel.classed('hit',hit).classed('dim',n=>!hit(n)); linkSel.classed('dim',true); }
+  if(nodeSel){ nodeSel.classed('hit',hit).classed('dim',n=>!hit(n)); linkSel.classed('dim',true); } if(view==='3d'&&window.hit3D) hit3D(hit);
   lRoot.selectAll('.dot').classed('hit',d=>d.name.toLowerCase().includes(s)).classed('dim',d=>!d.name.toLowerCase().includes(s));
-  toast.textContent=(view==='graph'?cur.nodes.filter(hit).length+' node matches':'')+(hitHosts.size?' · hosts: '+[...hitHosts].map(hostLabel).join(', '):''); toast.style.display='block'; }
+  toast.textContent=(view==='graph'||view==='3d'?cur.nodes.filter(hit).length+' node matches':'')+(hitHosts.size?' · hosts: '+[...hitHosts].map(hostLabel).join(', '):''); toast.style.display='block'; }
 q.addEventListener('input',applySearch); q.addEventListener('keydown',e=>{if(e.key==='Escape'){q.value='';applySearch();q.blur();}}); document.addEventListener('keydown',e=>{if(e.key==='/'&&document.activeElement!==q){e.preventDefault();q.focus();}});
 // ---------------- controls ----------------
 const layersEl=document.getElementById('layers'); const layerCount=l=>F.containers.filter(c=>c.layer===l).length+Object.values(F.hosts).reduce((a,h)=>a+(h.unit_items||[]).filter(u=>u.layer===l).length,0);
@@ -303,15 +314,95 @@ document.getElementById('allLayers').onclick=()=>{for(const k of Object.keys(lay
 function refresh(){ view==='lanes'?renderLanes():view==='phys'?renderPhys():render(); }
 const kindsEl=document.getElementById('kinds'); for(const [k,lab] of Object.entries(KINDS)){const l=document.createElement('label');l.className='chk';l.innerHTML=`<input type=checkbox ${kindOn[k]?'checked':''}> <span class=sw style="background:${KCOLOR[k]}"></span> ${lab}`;l.querySelector('input').onchange=e=>{kindOn[k]=e.target.checked;if(k==='url'&&e.target.checked)showUrls=true;render();};kindsEl.appendChild(l);}
 const sitesEl=document.getElementById('sites'); for(const [s,v] of Object.entries(F.sites)){const l=document.createElement('label');l.className='chk';l.innerHTML=`<input type=checkbox checked> <span class=sw style="background:${v.color}"></span> ${esc(v.label)}`;l.querySelector('input').onchange=e=>{siteOn[s]=e.target.checked;refresh();};sitesEl.appendChild(l);}
-document.getElementById('bExpandHosts').onclick=()=>{for(const id of Object.keys(F.hosts)) if(F.hosts[id].containers.length||(F.hosts[id].unit_items||[]).length) expandedHosts.add(id); setView('graph');};
-document.getElementById('bCollapse').onclick=()=>{expandedHosts.clear();expandedGroups.clear();showUrls=false;document.getElementById('bUrls').classList.remove('on');scope={type:'fleet'};scopeStack.length=0;setView('graph');crumbs();};
-document.getElementById('bFit').onclick=()=>view==='graph'?fit():setView('lanes'); function fit(){ if(!cur.nodes.length) return; const xs=cur.nodes.map(n=>n.x),ys=cur.nodes.map(n=>n.y); const x0=d3.min(xs)-60,x1=d3.max(xs)+60,y0=d3.min(ys)-60,y1=d3.max(ys)+60; const k=Math.min(W()/(x1-x0),H()/(y1-y0),1.5); svg.transition().duration(600).call(zoom.transform,d3.zoomIdentity.translate(W()/2-k*(x0+x1)/2,H()/2-k*(y0+y1)/2).scale(k)); }
+document.getElementById('bExpandHosts').onclick=()=>{for(const id of Object.keys(F.hosts)) if(F.hosts[id].containers.length||(F.hosts[id].unit_items||[]).length) expandedHosts.add(id); setView(view==='3d'?'3d':'graph');};
+document.getElementById('bCollapse').onclick=()=>{expandedHosts.clear();expandedGroups.clear();showUrls=false;document.getElementById('bUrls').classList.remove('on');scope={type:'fleet'};scopeStack.length=0;setView(view==='3d'?'3d':'graph');crumbs();};
+document.getElementById('bFit').onclick=()=>view==='graph'||view==='3d'?fit():setView('lanes'); function fit(){ if(view==='3d'){fit3D();return;} if(!cur.nodes.length) return; const xs=cur.nodes.map(n=>n.x),ys=cur.nodes.map(n=>n.y); const x0=d3.min(xs)-60,x1=d3.max(xs)+60,y0=d3.min(ys)-60,y1=d3.max(ys)+60; const k=Math.min(W()/(x1-x0),H()/(y1-y0),1.5); svg.transition().duration(600).call(zoom.transform,d3.zoomIdentity.translate(W()/2-k*(x0+x1)/2,H()/2-k*(y0+y1)/2).scale(k)); }
 document.getElementById('bPhys').onclick=e=>{physics=!physics;e.target.classList.toggle('on',!physics);e.target.textContent=physics?'⏸ physics':'▶ physics';physics?sim.alpha(.3).restart():sim.stop();};
-document.getElementById('bUrls').onclick=e=>{showUrls=!showUrls;kindOn.url=showUrls;kindsEl.querySelectorAll('input')[Object.keys(KINDS).indexOf('url')].checked=showUrls;e.target.classList.toggle('on',showUrls);setView('graph');};
+document.getElementById('bUrls').onclick=e=>{showUrls=!showUrls;kindOn.url=showUrls;kindsEl.querySelectorAll('input')[Object.keys(KINDS).indexOf('url')].checked=showUrls;e.target.classList.toggle('on',showUrls);setView(view==='3d'?'3d':'graph');};
 document.querySelectorAll('#groupSeg span').forEach(s=>s.onclick=()=>{groupBy=s.dataset.g;document.querySelectorAll('#groupSeg span').forEach(x=>x.classList.toggle('on',x===s));expandedGroups.clear();render();});
 svg.on('click',()=>{nodeSel.classed('hit',false);});
 function stats(){const nh=Object.keys(F.hosts).length,on=Object.values(F.hosts).filter(h=>h.online===true).length;document.getElementById('stats').innerHTML=`${nh} hosts (${on} online) · ${F.containers.length} containers · ${new Set(F.routes.map(r=>r.hostname)).size} public hostnames · ${LAYERS.length} layers<br>snapshot ${esc(F.generatedAt)}`;}
 function applyPriv(){ document.getElementById('bPriv').classList.toggle('on',privacy); document.getElementById('privbanner').style.display=privacy?'block':'none'; try{localStorage.setItem('fleetmap-privacy',privacy?'1':'0');}catch(e){} }
 document.getElementById('bPriv').onclick=()=>{privacy=!privacy; applyPriv(); det.innerHTML='<h3>'+(privacy?'🔒 Privacy mode on':'Privacy mode off')+'</h3><div class=k>'+esc(PRIV.desc||'')+'</div>'; refresh();};
-applyPriv(); drawLayers(); render(); crumbs(); setTimeout(fit,1200); window.addEventListener('resize',()=>{if(view==='graph')sim.alpha(.2).restart();else renderLanes();});
+applyPriv(); drawLayers(); window.addEventListener('resize',()=>{if(view==='3d'){resize3D();}else if(view==='graph')sim.alpha(.2).restart();else if(view==='lanes')renderLanes();});
+</script>
+<script>
+// ---------------- 3D view (three.js + 3d-force-graph, vendored in vendor/fleet3d.bundle.js) ----------------
+const {ForceGraph3D, THREE, SpriteText, UnrealBloomPass, OutputPass, d3f3}=window.Fleet3D;
+const g3el=document.getElementById('g3d'); let G3=null, bloomPass=null, spin=true, glow=true; const pos3={}; let cur3={nodes:[],links:[]}; const siteObjs={}; let lastMouse=null, last3={id:null,t:0}, hovered3=null, lastSK3=null;
+const ANCH3={edge:[0,300,0],hq:[300,-30,0],clinic:[140,-210,230],shafen:[-280,50,-170],'cloud-us':[-190,180,220],'cloud-br':[-60,-270,-250],mobile:[-110,-30,110]}; for(const k of Object.keys(F.sites)) ANCH3[k]=ANCH3[k]||[0,0,0];
+const glowTex=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');const g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.3,'rgba(255,255,255,.35)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);})();
+function halo(color,size,op){ const m=new THREE.SpriteMaterial({map:glowTex,color,transparent:true,opacity:op??.5,blending:THREE.AdditiveBlending,depthWrite:false}); const s=new THREE.Sprite(m); s.scale.set(size,size,1); s.userData.halo=true; return s; }
+const std=(color,e,o)=>new THREE.MeshStandardMaterial(Object.assign({color,emissive:color,emissiveIntensity:e,roughness:.35,metalness:.25},o||{}));
+function label3(text,h,color){ const s=new SpriteText(text,h,color||'#e6edf7'); s.fontFace='-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'; s.fontWeight=h>=5?'600':'500'; s.backgroundColor='rgba(8,12,26,.62)'; s.padding=[h*.7,h*.35]; s.borderRadius=h*.5; s.material.depthWrite=false; s.userData.label=true; return s; }
+function ovOf(n){ return n.type==='host'?ovHit(n.data.tags_overlay):n.type==='container'?ovHit(n.data.tags):n.type==='external'?((ovOn['saas-inference']&&n.id==='cloud-llm')||(ovOn['saas-platform']&&['cloudflare','internet','tailnet'].includes(n.id))):n.type==='group'?n.items.some(i=>ovHit(itemsOf(i).tags)):false; }
+function setOpacity(o,op){ o.traverse(c=>{ if(c.material){ if(c.userData.op0==null) c.userData.op0=c.material.opacity??1; c.material.transparent=true; c.material.opacity=c.userData.op0*op; } }); }
+function nodeObj3(n){ const g=new THREE.Group(); const t=n.type;
+  if(t==='host'){ const r=n.r*1.05; const col=n.gpu?'#c084fc':'#7aa2ff';
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(r,40,40),new THREE.MeshPhysicalMaterial({color:n.gpu?'#2a1e4a':'#1e2a4a',emissive:col,emissiveIntensity:.55,roughness:.2,metalness:.55,clearcoat:1,clearcoatRoughness:.15})));
+    g.add(halo(col,r*6.5,.55));
+    const bb=new THREE.Group(); bb.userData.billboard=true;
+    const st=n.online===true?'#22c55e':n.online===false?'#ef4444':'#64748b'; bb.add(new THREE.Mesh(new THREE.TorusGeometry(r+2.4,.5,8,72),std(st,1.8)));
+    const tot=Object.values(n.counts).reduce((a,b)=>a+b,0)||1; let a=Math.PI/2; for(const [lay,c] of Object.entries(n.counts).sort((x,y)=>LIDX[x[0]]-LIDX[y[0]])){ const len=2*Math.PI*c/tot-.06; if(len<=0) continue; const seg=new THREE.Mesh(new THREE.TorusGeometry(r+5.2,1,8,Math.max(6,Math.round(len*16)),len),std(LCOLOR[lay],1.2)); a-=len; seg.rotation.z=a; bb.add(seg); }
+    g.add(bb); const lb=label3(P(n.label),9); lb.position.y=-(r+13); g.add(lb); }
+  else if(t==='container'){ const col=n.color||'#7aa2ff'; g.add(new THREE.Mesh(new THREE.SphereGeometry(3.4,18,18),std(col,1))); g.add(halo(col,18,.5)); const l=P(n.label); const lb=label3(l.length>28?l.slice(0,27)+'…':l,3.2,'#d7e0f0'); lb.position.y=-6.5; g.add(lb); }
+  else if(t==='group'){ const col=n.color||'#7aa2ff'; const r=Math.max(4.5,n.r*.85); g.add(new THREE.Mesh(new THREE.IcosahedronGeometry(r,1),new THREE.MeshBasicMaterial({color:col,wireframe:true,transparent:true,opacity:.7}))); g.add(new THREE.Mesh(new THREE.SphereGeometry(r*.5,20,20),std(col,.9))); g.add(halo(col,r*4.2,.45)); const lb=label3(P(n.label),4.2); lb.position.y=-(r+6.5); g.add(lb); g.userData.spin=.006; }
+  else if(t==='external'){ const r=n.r*.62; g.add(new THREE.Mesh(new THREE.OctahedronGeometry(r,0),new THREE.MeshPhysicalMaterial({color:'#5b1a1a',emissive:'#f87171',emissiveIntensity:.8,roughness:.3,metalness:.4,flatShading:true}))); g.add(halo('#f87171',r*5.5,.5)); const lb=label3(P(n.label),6.5); lb.position.y=-(r+10); g.add(lb); g.userData.spin=.01; }
+  else if(t==='portal'){ const r=n.r*.8; g.add(new THREE.Mesh(new THREE.SphereGeometry(r,16,16),new THREE.MeshBasicMaterial({color:'#64748b',wireframe:true,transparent:true,opacity:.3}))); const lb=label3(P(n.label),4.4,'#cbd5e1'); lb.position.y=-(r+7); g.add(lb); }
+  else { g.add(new THREE.Mesh(new THREE.SphereGeometry(2,12,12),std('#fb7185',1))); const lb=label3(P(n.label),2.2,'#fda4af'); lb.position.y=-4.5; g.add(lb); }
+  if(n.ghost) setOpacity(g,.35);
+  if(ovActive()){ if(ovOf(n)){ const tg=(n.type==='host'?n.data.tags_overlay:n.type==='container'?n.data.tags:n.type==='external'?(ovOn['saas-inference']&&n.id==='cloud-llm'?['saas-inference']:['saas-platform']):[])||[]; const k=tg.find(x=>ovOn[x]); if(k) g.add(halo(OVCOLOR[k],n.type==='host'?n.r*9:n.type==='container'?26:n.r*6,.8)); } else setOpacity(g,.1); }
+  g.userData.n=n; return g; }
+function ensureSites(scene){ for(const [s,v] of Object.entries(F.sites)){ if(siteObjs[s]) continue; const grp=new THREE.Group(); const m=new THREE.Mesh(new THREE.SphereGeometry(1,48,48),new THREE.MeshBasicMaterial({color:v.color,transparent:true,opacity:.02,depthWrite:false,side:THREE.BackSide})); const w=halo(v.color,1,.085); const lb=label3(siteLabel(s),10,v.color); lb.backgroundColor='rgba(8,12,26,.4)'; lb.userData.txt=siteLabel(s); grp.add(m,w,lb); grp.userData={m,w,lb}; grp.visible=false; scene.add(grp); siteObjs[s]=grp; } }
+function tickSites(){ const show=scope.type==='fleet'||scope.type==='layer'; const by={}; for(const n of cur3.nodes){ if(n.type==='url'||n.x==null||!F.sites[n.site]) continue; (by[n.site]=by[n.site]||[]).push(n);} for(const [s,grp] of Object.entries(siteObjs)){ const ns=by[s]; if(!show||!ns){grp.visible=false;continue;} grp.visible=true; let cx=0,cy=0,cz=0; for(const n of ns){cx+=n.x;cy+=n.y;cz+=n.z;} cx/=ns.length;cy/=ns.length;cz/=ns.length; let R=0; for(const n of ns) R=Math.max(R,Math.hypot(n.x-cx,n.y-cy,n.z-cz)+n.r*1.3+26); const {m,w,lb}=grp.userData; m.position.set(cx,cy,cz); m.scale.setScalar(R); w.position.set(cx,cy,cz); w.scale.set(R*2.4,R*2.4,1); lb.position.set(cx,cy+R+12,cz); const txt=siteLabel(s); if(lb.userData.txt!==txt){lb.userData.txt=txt;lb.text=txt;} } }
+function addStars(scene){ const N=3200; const p=new Float32Array(N*3); for(let i=0;i<N;i++){ const r=1500+Math.random()*2400; const th=Math.random()*2*Math.PI, ph=Math.acos(2*Math.random()-1); p[i*3]=r*Math.sin(ph)*Math.cos(th); p[i*3+1]=r*Math.sin(ph)*Math.sin(th); p[i*3+2]=r*Math.cos(ph);} const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); const stars=new THREE.Points(geo,new THREE.PointsMaterial({color:'#9fb3d9',size:3,sizeAttenuation:true,transparent:true,opacity:.75,map:glowTex,blending:THREE.AdditiveBlending,depthWrite:false})); stars.userData.stars=true; scene.add(stars); }
+function init3D(){ if(G3) return G3;
+  G3=ForceGraph3D({controlType:'orbit',rendererConfig:{antialias:true,powerPreference:'high-performance'}})(g3el)
+   .width(W()).height(H()).backgroundColor('#060a16').showNavInfo(false)
+   .nodeId('id').nodeThreeObject(nodeObj3).nodeRelSize(1).nodeVal(n=>n.r)
+   .linkColor(l=>l.kind==='member'?'#3b4a6b':KCOLOR[l.kind]).linkOpacity(.55)
+   .linkWidth(l=>['edge','lane','stream','route','mail','dep','auth'].includes(l.kind)?(l.kind==='edge'?1.5:.8):0)
+   .linkCurvature(l=>l.kind==='member'||l.kind==='lan'||l.kind==='tailnet'?0:.25).linkCurveRotation(l=>((l.label||'').length%9)*.7)
+   .linkDirectionalParticles(l=>['edge','route','lane','stream','mail','dep','url'].includes(l.kind)?(l.kind==='edge'?4:2):0).linkDirectionalParticleWidth(l=>l.kind==='edge'?2.4:1.5).linkDirectionalParticleSpeed(l=>l.kind==='edge'?.008:.005).linkDirectionalParticleColor(l=>KCOLOR[l.kind])
+   .linkDirectionalArrowLength(l=>['edge','route','lane','stream','mail'].includes(l.kind)?4.5:0).linkDirectionalArrowRelPos(1).linkDirectionalArrowColor(l=>KCOLOR[l.kind])
+   .onNodeHover(n=>{ g3el.style.cursor=n?'pointer':null; if(n&&lastMouse) tip(lastMouse,tipHtml(n)); else hideTip(); hover3D(n); })
+   .onNodeClick(n=>{ const now=Date.now(); if(last3.id===n.id&&now-last3.t<450){ last3={id:null,t:0}; dbl3(n); return;} last3={id:n.id,t:now}; clickNode(n); })
+   .onLinkHover(l=>{ if(l&&lastMouse) tip(lastMouse,`<b>${KINDS[l.kind]}</b> · layer ${esc(l.layer)}<br>${name(l.source)} → ${name(l.target)}<br>${esc(l.label)}`); else if(!l) hideTip(); })
+   .onLinkClick(l=>detailLink(l)).onBackgroundClick(()=>{ if(!q.value.trim()) hit3D(null); })
+   .d3VelocityDecay(.3).warmupTicks(60).cooldownTime(10000)
+   .onEngineTick(()=>{ const SK=scopeKey(); for(const n of cur3.nodes) pos3[SK+'|'+n.id]={x:n.x,y:n.y,z:n.z}; });
+  const sc=()=>scope.type==='host'||scope.type==='group';
+  G3.d3Force('charge').strength(n=>n.type==='container'?-50:n.type==='group'?-220:n.type==='url'?-28:-720).distanceMax(1000);
+  G3.d3Force('link').distance(l=>{ if(l.kind==='member') return sc()?(l.target.type==='container'?90:105):(l.target.type==='container'?38:100); return l.kind==='url'?48:l.kind==='dep'?75:l.kind==='lan'?190:l.kind==='tailnet'?280:250; }).strength(l=>l.kind==='member'?(sc()?.2:.85):l.kind==='dep'?.1:l.kind==='lan'?.02:l.kind==='tailnet'?.04:(sc()?.05:.2));
+  G3.d3Force('collide',d3f3.forceCollide(n=>n.r+12).iterations(2));
+  const anchorStr=n=>(scope.type==='fleet'||scope.type==='layer')?(n.type==='host'||n.type==='external'?.16:.02):0;
+  G3.d3Force('sx',d3f3.forceX(n=>ANCH3[n.site]?ANCH3[n.site][0]:0).strength(anchorStr)); G3.d3Force('sy',d3f3.forceY(n=>ANCH3[n.site]?ANCH3[n.site][1]:0).strength(anchorStr)); G3.d3Force('sz',d3f3.forceZ(n=>ANCH3[n.site]?ANCH3[n.site][2]:0).strength(anchorStr));
+  G3.d3Force('radial',d3f3.forceRadial(n=>{ const n2=cur3.nodes.filter(x=>x.ring===2).length; const r2=Math.max(190,Math.sqrt(n2)*30); const n1=cur3.nodes.filter(x=>x.ring===1).length; const r1=scope.type==='group'?Math.max(100,Math.sqrt(n1)*26):105; return [0,r1,r2,r2+110][n.ring||0]||0; },0,0,0).strength(n=>sc()&&n.ring?.9:0));
+  const scene=G3.scene(); scene.background=new THREE.Color('#101a33'); scene.fog=new THREE.FogExp2('#060a16',.00042); addStars(scene); ensureSites(scene);
+  const l1=new THREE.DirectionalLight('#dfe8ff',1.6); l1.position.set(1,1,1); const l2=new THREE.DirectionalLight('#a78bfa',1.1); l2.position.set(-1,-.5,-1); const l3=new THREE.PointLight('#22d3ee',900,0,1.2); l3.position.set(0,260,300);
+  G3.lights([new THREE.AmbientLight('#b9c6ff',.9),l1,l2,l3]);
+  bloomPass=new UnrealBloomPass(new THREE.Vector2(W(),H()),.8,.45,.25); bloomPass.enabled=glow; G3.postProcessingComposer().addPass(bloomPass); G3.postProcessingComposer().addPass(new OutputPass()); G3.renderer().toneMapping=THREE.ACESFilmicToneMapping; G3.renderer().toneMappingExposure=1.15;
+  const ctl=G3.controls(); ctl.autoRotate=spin; ctl.autoRotateSpeed=.5; ctl.enableDamping=true; ctl.dampingFactor=.08; ctl.minDistance=40; ctl.maxDistance=4000;
+  G3.cameraPosition({x:0,y:140,z:1250});
+  g3el.addEventListener('mousemove',e=>{lastMouse=e; if(tipEl.style.display==='block') moveTip(e);});
+  g3el.addEventListener('pointerdown',()=>{ctl.autoRotate=false;}); window.addEventListener('pointerup',()=>{ if(G3) G3.controls().autoRotate=spin; });
+  requestAnimationFrame(loop3D); return G3; }
+function loop3D(){ requestAnimationFrame(loop3D); if(view!=='3d'||!G3) return; const cam=G3.camera(); const qn=cam.quaternion; for(const n of cur3.nodes){ const o=n.__threeObj; if(!o) continue; if(o.userData.spin){ o.children[0].rotation.y+=o.userData.spin; o.children[0].rotation.x+=o.userData.spin*.4; } for(const c of o.children) if(c.userData.billboard) c.quaternion.copy(qn); } tickSites(); }
+function render3D(){ init3D(); const g=buildGraph(); const SK=scopeKey(); const changed=SK!==lastSK3; lastSK3=SK;
+  for(const n of g.nodes){ delete n.fx; delete n.fy; const p=pos3[SK+'|'+n.id]; if(p){n.x=p.x;n.y=p.y;n.z=p.z;} else if(n.host&&pos3[SK+'|'+n.host]){const h=pos3[SK+'|'+n.host]; n.x=h.x+(Math.random()-.5)*70;n.y=h.y+(Math.random()-.5)*70;n.z=h.z+(Math.random()-.5)*70;} else { const a=ANCH3[n.site]||[0,0,0]; n.x=a[0]+(Math.random()-.5)*180;n.y=a[1]+(Math.random()-.5)*180;n.z=a[2]+(Math.random()-.5)*180; }
+    if(n.pinned){n.fx=n.fy=n.fz=0;n.x=n.y=n.z=0;} }
+  cur3=g; cur=g; const act=ovActive();
+  G3.linkColor(l=>{ const base=l.kind==='member'?'#3b4a6b':KCOLOR[l.kind]; if(!act) return base; const on=(ovOn['saas-inference']&&l.kind==='lane')||(ovOn['saas-platform']&&['edge','route','auth'].includes(l.kind))||(ovOn.prod&&['edge','route','mail','stream'].includes(l.kind)); return on?base:'rgba(59,74,107,0.12)'; });
+  G3.graphData({nodes:g.nodes,links:g.links}); stats(); applySearch(); if(changed) setTimeout(fit3D,1400); }
+function fit3D(){ if(G3&&cur3.nodes.length) G3.zoomToFit(900,60); }
+function focus3D(id){ const n=cur3.nodes.find(x=>x.id===id); if(!n||n.x==null) return; const d=Math.hypot(n.x,n.y,n.z)||1; const k=1+240/d; G3.cameraPosition({x:n.x*k,y:n.y*k+30,z:n.z*k+160},n,900); hit3D(x=>x.id===id); }
+function hit3D(fn){ for(const n of cur3.nodes){ const o=n.__threeObj; if(!o) continue; const h=fn?fn(n):null; setOpacity(o,fn?(h?1:.08):1); o.scale.setScalar(fn&&h?1.35:1); } }
+function hover3D(n){ if(hovered3&&hovered3.__threeObj&&hovered3!==n) hovered3.__threeObj.scale.setScalar(1); hovered3=n; if(n&&n.__threeObj) n.__threeObj.scale.setScalar(1.3); }
+function dbl3(d){ if(d.type==='host') openScope({type:'host',id:d.id}); else if(d.type==='group') openScope({type:'group',host:d.host,id:d.id}); else if(d.type==='portal'&&d.portalHost) openScope({type:'host',id:d.portalHost}); else if(d.type==='container'&&d.data.host&&scope.type!=='host') openScope({type:'host',id:d.data.host}); }
+function resize3D(){ if(!G3) return; G3.width(W()).height(H()); if(bloomPass) bloomPass.setSize(W(),H()); }
+document.getElementById('bSpin').onclick=e=>{ spin=!spin; e.target.classList.toggle('on',spin); if(G3) G3.controls().autoRotate=spin; };
+document.getElementById('bGlow').onclick=e=>{ glow=!glow; e.target.classList.toggle('on',glow); if(bloomPass) bloomPass.enabled=glow; };
+window.render3D=render3D; window.hit3D=hit3D;
+let initView='3d'; try{ initView=localStorage.getItem('fleetmap-view')||'3d'; }catch(e){} if(!['3d','graph','lanes','phys'].includes(initView)) initView='3d';
+setView(initView); crumbs(); if(initView==='graph') setTimeout(fit,1200);
 </script></body></html>
