@@ -6,3 +6,5 @@ data/headscale-nodes.json
 .DS_Store
 index.v1.html
 index.v2.html
+data/unifi.json
+data/unifi.json.tmp

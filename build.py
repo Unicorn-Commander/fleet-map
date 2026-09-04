@@ -82,6 +82,7 @@ def parse_inv(path):
                 meta[k.lower()] = v
         elif ln.startswith("IPS="): meta["ips"] = ln[4:].split()
         elif ln.startswith("TS="): meta["ts"] = ln[3:].strip()
+        elif ln.startswith("MACS="): meta["macs"] = [m.split("=")[-1].lower() for m in ln[5:].split() if "=" in m]
         elif ln.startswith("GPU="): meta["gpu"] = [g for g in ln[4:].split(";") if g.strip()]
         elif ln.startswith("LISTEN="): meta["listen"] = ln[7:].split()
         elif ln.startswith("UNITS="): meta["units"] = ln[6:].split()
@@ -200,6 +201,109 @@ for hid, m in hosts.items():
     if hid in GPU_HOSTS or hid in {"srv981531"}: ht.add("saas-inference")
     m["tags_overlay"] = sorted(ht)
 
+# ---- network layer: UniFi controller truth (data/unifi.json from data/unifi.py) ----
+# Adds out["network"] = {devices, clients, networks, wlans, links, generatedAt} and host.net / host.net_all.
+# Matching client -> fleet host: MAC (inv MACS=), then IP (inv IPS= / topology), then name/hostname vs host id, aliases,
+# display and topology hosts.<id>.netNames. Links: wired host->switch/AP port, wifi host->AP, uplink device->device.
+network = None
+def _ipset(m):
+    return {ip.split("=")[-1].split("/")[0] for ip in m.get("ips", [])}
+def _subnet_of(ip, nets):
+    try:
+        import ipaddress
+        a = ipaddress.ip_address(ip)
+        for n in nets:
+            if n.get("subnet") and a in ipaddress.ip_network(n["subnet"], strict=False): return n
+    except ValueError:
+        pass
+    return None
+def _fmt_speed(mbps):
+    if not mbps: return "link down"
+    return f"{mbps/1000:g} Gb" if mbps >= 1000 else f"{mbps} Mb"
+try:
+    uni = json.load(open(os.path.join(D, "unifi.json")))
+    net_names = {}
+    for hid, h in hosts.items():
+        t = topo["hosts"].get(hid, {})
+        for nm in [hid, h.get("display")] + list(t.get("aliases", [])) + list(t.get("netNames", [])):
+            if nm: net_names[str(nm).lower()] = hid
+    mac2host = {m: hid for hid, h in hosts.items() for m in h.get("macs", [])}
+    lanip2host = {}
+    for hid, h in hosts.items():
+        for ip in _ipset(h): lanip2host[ip] = hid
+    dev_by_mac = {d["mac"]: d for d in uni["devices"]}
+    net_by_id = {n["id"]: n for n in uni["networks"]}
+    net_by_name = {n["name"]: n for n in uni["networks"]}
+    nlinks = []
+    for d in uni["devices"]:
+        d["host"] = None
+        up = d.get("uplink")
+        if up and up.get("mac") in dev_by_mac:
+            nlinks.append({"s": d["id"], "t": up["mac"], "k": "uplink",
+                           "l": f"{d['name']} uplink → {dev_by_mac[up['mac']]['name']} port {up.get('remote_port')} · {_fmt_speed(up.get('speed'))}" + (" (offline)" if not d["online"] else ""),
+                           "meta": {"port": up.get("remote_port"), "speed": up.get("speed"), "online": d["online"]}})
+    for c in uni["clients"]:
+        hid = None; how = None
+        if c["mac"] in mac2host: hid, how = mac2host[c["mac"]], "mac"
+        if not hid:
+            for ip in (c.get("ip"), c.get("fixed_ip"), c.get("last_ip")):
+                if ip and ip in lanip2host: hid, how = lanip2host[ip], "ip"; break
+        if not hid:
+            for nm in (c.get("name"), c.get("hostname")):
+                if not nm: continue
+                k = str(nm).lower()
+                for cand in (k, re.sub(r"[-_ ](wifi|wlan|wired|eth|lan)\d*$", "", k)):
+                    if cand in net_names: hid, how = net_names[cand], "name"; break
+                if hid: break
+        c["host"] = hid; c["match"] = how
+        dev = dev_by_mac.get(c.get("sw_mac") if c["wired"] else c.get("ap_mac"))
+        c["device"] = dev["id"] if dev else None; c["device_name"] = dev["name"] if dev else None
+        # network sanity: controller says X, the host's own interface subnet says Y (Flex Mini clients come back "Default" with no IP)
+        if hid:
+            own = sorted(ip for ip in _ipset(hosts[hid]) if not ip.startswith("100."))
+            own_nets = {}
+            for ip in own:
+                sn = _subnet_of(ip, uni["networks"])
+                if sn: own_nets.setdefault(sn["name"], ip)
+            if own_nets and c.get("network") not in own_nets:
+                c["host_network"] = ", ".join(sorted(own_nets)); c["host_ip"] = own_nets[sorted(own_nets)[0]]
+            elif c.get("ip") and own and c["ip"] not in own:
+                c["host_ip"] = next((ip for ip in own if _subnet_of(ip, uni["networks"]) and _subnet_of(ip, uni["networks"])["name"] == c.get("network")), own[0])
+        if not dev: continue
+        if c["wired"]:
+            port = next((p for p in dev["ports"] if p["idx"] == c.get("sw_port")), None)
+            lab = f"{dev['name']} port {c.get('sw_port')}" + (f" “{port['name']}”" if port and port.get("name") and not re.match(r"^(Port|SFP\+?) ?\d+$", port["name"]) else "") + f" · {_fmt_speed(c.get('speed'))}"
+            if c.get("network"): lab += f" · {c['network']}" + (f" (VLAN {c['vlan']})" if c.get("vlan") else "")
+            c["link"] = {"k": "lan", "l": lab}
+        else:
+            lab = f"{dev['name']} · {c.get('essid') or 'wifi'} · {c.get('signal')} dBm · ch {c.get('channel')} ({c.get('band') or ''}) · {round((c.get('tx_rate') or 0)/1000)} Mb"
+            if c.get("network"): lab += f" · {c['network']}" + (f" (VLAN {c['vlan']})" if c.get("vlan") else "")
+            c["link"] = {"k": "wifi", "l": lab}
+        if hid:
+            nlinks.append({"s": hid, "t": dev["id"], "k": c["link"]["k"], "l": c["link"]["l"], "client": c["mac"]})
+    for hid, h in hosts.items():
+        mine = [c for c in uni["clients"] if c["host"] == hid]
+        if not mine: continue
+        mine.sort(key=lambda c: (not c["wired"], -(c.get("signal") or -999)))  # wired first, then strongest wifi
+        c = mine[0]
+        h["net"] = {"device": c["device"], "device_name": c["device_name"], "wired": c["wired"],
+                    "port": c.get("sw_port"), "speed": c.get("speed"), "ap": c.get("ap_mac"), "essid": c.get("essid"),
+                    "signal": c.get("signal"), "rssi": c.get("rssi"), "channel": c.get("channel"), "band": c.get("band"),
+                    "tx_rate": c.get("tx_rate"), "vlan": c.get("vlan"), "network": c.get("network"), "host_network": c.get("host_network"),
+                    "ip": c.get("ip"), "host_ip": c.get("host_ip"), "mac": c["mac"], "uptime": c.get("uptime"), "match": c["match"], "links": len(mine)}
+        h["net_all"] = [c["mac"] for c in mine]
+    gw = next((d for d in uni["devices"] if d["type"] == "gateway"), None)
+    if gw and gw.get("wan", {}).get("ip"):
+        nlinks.append({"s": "internet", "t": gw["id"], "k": "edge", "l": f"WAN {gw['wan'].get('ifname') or ''} {gw['wan']['ip']} · {_fmt_speed(gw['wan'].get('speed'))}"})
+    matched = sum(1 for c in uni["clients"] if c["host"])
+    network = {"generatedAt": uni.get("generatedAt"), "controller": {k: v for k, v in uni.get("controller", {}).items() if k != "user"},
+               "devices": uni["devices"], "clients": uni["clients"], "networks": uni["networks"], "wlans": uni.get("wlans", []), "links": nlinks}
+    print(f"network: {len(uni['devices'])} devices, {len(uni['clients'])} clients ({matched} matched to {len({c['host'] for c in uni['clients'] if c['host']})} hosts), {len(nlinks)} links", file=sys.stderr)
+except FileNotFoundError:
+    print("data/unifi.json missing: network layer falls back to the static lanMembers mesh", file=sys.stderr)
+except Exception as e:
+    print("unifi.json merge failed:", repr(e), file=sys.stderr)
+
 # drift: nodes the tailnet knows that topology.json does not (new box, renamed box, missing alias)
 unmapped = sorted({name for name in hs if canon(name) not in topo["hosts"]})
 if unmapped:
@@ -207,7 +311,7 @@ if unmapped:
 out = {"generatedAt": datetime.datetime.now().astimezone().isoformat(timespec="seconds"), "unmapped": unmapped,
        "sites": topo["sites"], "externals": topo["externals"], "links": topo["links"],
        "tailnetMembers": topo["tailnetMembers"], "layers": topo["layers"], "linkLayer": topo["linkLayer"], "overlays": topo["overlays"], "privacy": topo.get("privacy", {}), "lanMembers": topo["lanMembers"],
-       "hosts": hosts, "containers": containers, "routes": routes}
+       "hosts": hosts, "containers": containers, "routes": routes, "network": network}
 open(os.path.join(HERE, "data.js"), "w").write("window.FLEET = " + json.dumps(out, indent=None) + ";\n")
 print(f"data.js: {len(hosts)} hosts, {len(containers)} containers, {len(routes)} routes, "
       f"{sum(len(h['hostnames']) for h in hosts.values())} public hostnames")
