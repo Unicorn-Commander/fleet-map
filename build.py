@@ -304,6 +304,66 @@ except FileNotFoundError:
 except Exception as e:
     print("unifi.json merge failed:", repr(e), file=sys.stderr)
 
+# ---- agent layer: data/agents.json -> agents[] with every piece resolved to a host (+ container/unit when one matches) ----
+AGENT_KINDS, agents_out = [], []
+ext_ids = {e["id"] for e in topo["externals"]}
+def resolve_service(hid, svc):
+    """container id on hid whose name matches svc (exact first, then substring preferring backend/api), else a systemd unit id, else None."""
+    if not svc or hid not in hosts: return None
+    if f"{hid}/{svc}" in contById_tmp: return f"{hid}/{svc}"
+    cands = [cid for cid in hosts[hid]["containers"] if svc.lower() in cid.split("/", 1)[1].lower()]
+    if cands:
+        cands.sort(key=lambda c: (not re.search(r"backend|api|engine", c), len(c)))
+        return cands[0]
+    for u in hosts[hid].get("units", []):
+        if u == svc or u == svc + ".service" or u.startswith(svc + "."): return "unit:" + hid + "/" + u
+    return None
+try:
+    A = json.load(open(os.path.join(D, "agents.json")))
+    AGENT_KINDS = A.get("kinds", [])
+    bad = []
+    def piece(a, kind, label, p):
+        hid = p.get("host")
+        if hid not in hosts and hid not in ext_ids:
+            bad.append((a["id"], kind, hid)); return None
+        tgt = resolve_service(hid, p.get("service"))
+        if p.get("service") and not tgt: print(f"agents: {a['id']} {kind} service '{p['service']}' not found on {hid} (edge goes to the host)", file=sys.stderr)
+        out = {"kind": kind, "label": label, "host": hid, "target": tgt, "service": p.get("service"), "status": p.get("status", "live"), "note": p.get("note", "")}
+        if tgt and tgt in contById_tmp:
+            c = contById_tmp[tgt]; c.setdefault("agents", []); c.setdefault("agent_kinds", [])
+            if a["id"] not in c["agents"]: c["agents"].append(a["id"])
+            if kind not in c["agent_kinds"]: c["agent_kinds"].append(kind)
+        return out
+    for a in A.get("agents", []):
+        pieces = []
+        if a.get("seat"): pieces.append(piece(a, "seat", a["seat"].get("kind", "seat"), a["seat"]))
+        for s in a.get("seats_extra", []): pieces.append(piece(a, "seat", s.get("kind", "seat"), s))
+        v = a.get("voice")
+        if v:
+            pieces.append(piece(a, "voice", f"{v.get('engine','tts')} {v.get('voice_id','')}".strip(), v))
+            for b in v.get("backends", []): pieces.append(piece(a, "voice", f"{v.get('voice_id','')} backend", b))
+        if a.get("stt"): pieces.append(piece(a, "voice", "STT", a["stt"]))
+        if a.get("relay"): pieces.append(piece(a, "voice", "voice relay", a["relay"]))
+        for w in a.get("wake", []): pieces.append(piece(a, "wake", w.get("model", "wake word"), w))
+        for l in a.get("lanes", []): pieces.append(piece(a, "lane", l.get("model", "lane"), l))
+        for m in a.get("memory", []): pieces.append(piece(a, "memory", m.get("store", "memory"), m))
+        for t in a.get("tools", []): pieces.append(piece(a, "tool", t.get("label", "tool"), t))
+        for c in a.get("channels", []): pieces.append(piece(a, "channel", c.get("label", "channel"), c))
+        for p in a.get("pieces", []): pieces.append(piece(a, p.get("kind", "tool"), p.get("label", ""), p))
+        pieces = [p for p in pieces if p]
+        av = a.get("avatar")
+        if av and not os.path.exists(os.path.join(HERE, av)):
+            print(f"agents: {a['id']} avatar missing: {av}", file=sys.stderr); av = None
+        seat_host = (a.get("seat") or {}).get("host") or next((p["host"] for p in pieces if p["host"] in hosts), None)
+        agents_out.append({"id": a["id"], "name": a["name"], "role": a.get("role", ""), "tier": a.get("tier", "crew"), "avatar": av,
+                           "avatar_note": a.get("avatar_note", ""), "stable_username": a.get("stable_username"),
+                           "voice_id": (v or {}).get("voice_id"), "seat_host": seat_host, "pieces": pieces})
+    for b in bad: print(f"agents: UNKNOWN HOST {b[2]!r} on {b[0]} ({b[1]}) — must be a topology.json host or externals id; piece dropped", file=sys.stderr)
+    print(f"agents: {len(agents_out)} agents, {sum(len(a['pieces']) for a in agents_out)} pieces, "
+          f"{sum(1 for c in containers if c.get('agents'))} containers tagged", file=sys.stderr)
+except FileNotFoundError:
+    print("agents.json missing: no agent layer", file=sys.stderr)
+
 # drift: nodes the tailnet knows that topology.json does not (new box, renamed box, missing alias)
 unmapped = sorted({name for name in hs if canon(name) not in topo["hosts"]})
 if unmapped:
@@ -311,7 +371,7 @@ if unmapped:
 out = {"generatedAt": datetime.datetime.now().astimezone().isoformat(timespec="seconds"), "unmapped": unmapped,
        "sites": topo["sites"], "externals": topo["externals"], "links": topo["links"],
        "tailnetMembers": topo["tailnetMembers"], "layers": topo["layers"], "linkLayer": topo["linkLayer"], "overlays": topo["overlays"], "privacy": topo.get("privacy", {}), "lanMembers": topo["lanMembers"],
-       "hosts": hosts, "containers": containers, "routes": routes, "network": network}
+       "hosts": hosts, "containers": containers, "routes": routes, "network": network, "agents": agents_out, "agentKinds": AGENT_KINDS}
 open(os.path.join(HERE, "data.js"), "w").write("window.FLEET = " + json.dumps(out, indent=None) + ";\n")
 print(f"data.js: {len(hosts)} hosts, {len(containers)} containers, {len(routes)} routes, "
       f"{sum(len(h['hostnames']) for h in hosts.values())} public hostnames")
