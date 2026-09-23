@@ -13,7 +13,7 @@ the inventories with `topology.json` into `data.js`, `index.html` renders it (D3
 | local | `file:///Users/aaronstransky/Projects/fleet-map/index.html` | `data.js` from `./collect.sh` | toggle (🔒 button, `?privacy=1`) |
 | office panel | uc1-tv FLEET tile (panel-ops) | bigboy `panel-fleet-push.timer` every 5 min → panel feed | reduced, privacy applied |
 | Ops-Center | magicunicorn.dev Fleet Map page | bigboy `deploy/opscenter-push.sh` (ExecStartPost) | full data behind SSO |
-| **public** | **https://magicunicorn.tech/fleet/** (unlinked, noindex) | bigboy `deploy/public-push.sh` (ExecStartPost) → `reduce_public.py` → rsync → commander `/home/muut/fleet-public/data.js` | **forced on, server-side redacted** |
+| **public** | **https://unicorncommander.com/fleet/** (nav + home embed) and **https://magicunicorn.tech/fleet/** | bigboy `deploy/public-push.sh` (ExecStartPost) → `reduce_public.py` → rsync → commander `/home/muut/fleet-public/data.js` | **forced on, server-side redacted** |
 
 ## Public copy (Build In Public receipts page)
 
