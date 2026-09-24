@@ -24,8 +24,11 @@ BANNER_NEW = "🔒 PUBLIC VIEW — live fleet, refreshed every 5 min · IPs, por
 
 PATCHES = [
     # (description, regex, replacement)
-    ("noindex + title", re.escape("<title>Magic Unicorn Fleet Map</title>"),
-     '<title>Magic Unicorn Fleet Map</title><meta name="robots" content="noindex,nofollow">'),
+    ("indexable title", re.escape("<title>Magic Unicorn Fleet Map</title>"),
+     '<title>Live fleet map · Magic Unicorn</title><link rel="canonical" href="https://magicunicorn.tech/fleet/"><meta name="robots" content="index,follow">'),
+    ("agents on unless opted out",
+     re.escape("if(new URLSearchParams(location.search).get('layer')==='agents') setAgents(true);"),
+     "if(new URLSearchParams(location.search).get('layer')!=='off') setAgents(true);"),
     ("hide privacy button", r'<div><span class="btn" id="bPriv"[^>]*>[^<]*</span></div>',
      '<div style="display:none"><span class="btn" id="bPriv"></span></div>'),
     ("data path + cache-buster", re.escape('<script src="data.js"></script>'),
