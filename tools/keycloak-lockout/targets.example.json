@@ -1,0 +1,67 @@
+{
+  "targets": [
+    {
+      "name": "majiks-vps-master",
+      "base_url": "https://auth.majiks.studio",
+      "realm": "master",
+      "admin_user_env": "KC_MAJIKS_ADMIN_USER",
+      "admin_password_env": "KC_MAJIKS_ADMIN_PASSWORD",
+      "desired": {
+        "bruteForceProtected": true,
+        "failureFactor": 10,
+        "permanentLockout": false
+      }
+    },
+    {
+      "name": "commander-uc-customers",
+      "base_url": "https://auth.unicorncommander.ai",
+      "realm": "uc-customers",
+      "admin_user_env": "KC_COMMANDER_ADMIN_USER",
+      "admin_password_env": "KC_COMMANDER_ADMIN_PASSWORD",
+      "desired": {
+        "bruteForceProtected": true,
+        "failureFactor": 12,
+        "permanentLockout": false
+      }
+    },
+    {
+      "name": "commander-uchub",
+      "base_url": "https://auth.unicorncommander.ai",
+      "realm": "uchub",
+      "admin_user_env": "KC_COMMANDER_ADMIN_USER",
+      "admin_password_env": "KC_COMMANDER_ADMIN_PASSWORD",
+      "desired": {
+        "failureFactor": 12,
+        "maxTemporaryLockouts": 3,
+        "permanentLockout": false,
+        "waitIncrementSeconds": 120
+      }
+    },
+    {
+      "name": "bigboy-uchub",
+      "base_url": "https://auth.magicunicorn.dev",
+      "realm": "uchub",
+      "admin_user_env": "KC_BIGBOY_ADMIN_USER",
+      "admin_password_env": "KC_BIGBOY_ADMIN_PASSWORD",
+      "desired": {
+        "failureFactor": 12,
+        "maxTemporaryLockouts": 3,
+        "permanentLockout": false,
+        "waitIncrementSeconds": 120
+      }
+    },
+    {
+      "name": "majiks-realm",
+      "base_url": "https://auth.majiks.studio",
+      "realm": "majiks",
+      "admin_user_env": "KC_MAJIKS_ADMIN_USER",
+      "admin_password_env": "KC_MAJIKS_ADMIN_PASSWORD",
+      "desired": {
+        "failureFactor": 12,
+        "maxTemporaryLockouts": 3,
+        "permanentLockout": false,
+        "waitIncrementSeconds": 120
+      }
+    }
+  ]
+}
