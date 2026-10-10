@@ -8,3 +8,7 @@ index.v1.html
 index.v2.html
 data/unifi.json
 data/unifi.json.tmp
+
+# python bytecode
+__pycache__/
+*.pyc
