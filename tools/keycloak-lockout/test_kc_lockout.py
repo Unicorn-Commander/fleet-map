@@ -273,3 +273,17 @@ targets:
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class UserAgentTest(unittest.TestCase):
+    def test_transport_sends_a_named_user_agent(self):
+        seen = {}
+
+        def fake_urlopen(req, timeout=None):
+            seen["ua"] = req.get_header("User-agent")
+            raise kc.urllib.error.URLError("stop")
+
+        with mock.patch.object(kc.urllib.request, "urlopen", fake_urlopen):
+            with self.assertRaises(kc.KcError):
+                kc.UrllibTransport().request("GET", "http://keycloak.invalid/realms/master")
+        self.assertEqual(seen["ua"], kc.USER_AGENT)

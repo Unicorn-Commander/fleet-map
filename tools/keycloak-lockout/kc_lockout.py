@@ -37,6 +37,9 @@ BRUTE_FORCE_KEYS = (
 )
 
 DEFAULT_TIMEOUT_SECONDS = 30
+# Cloudflare answers the stock "Python-urllib/3.x" agent with 403 before the
+# request reaches Keycloak (measured 2026-10-10 on all three Keycloaks).
+USER_AGENT = "fleet-map-kc-lockout/1.0"
 DEFAULT_VERIFY_FAILURE_FACTOR = 10
 DEFAULT_VERIFY_CLIENT_ID = "account-console"
 ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -78,10 +81,12 @@ class UrllibTransport:
         headers: dict[str, str] | None = None,
         data: bytes | None = None,
     ) -> HttpResponse:
+        request_headers = {"User-Agent": USER_AGENT}
+        request_headers.update(headers or {})
         request = urllib.request.Request(
             url,
             data=data,
-            headers=headers or {},
+            headers=request_headers,
             method=method,
         )
         try:
