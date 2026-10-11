@@ -33,5 +33,6 @@ the inventories with `topology.json` into `data.js`, `index.html` renders it (D3
   (`deploy/public-push.service.d.conf`, installed by `deploy/public-push-install.sh`). No tokens:
   rsync over bigboy muut's ssh key to commander muut. Site side: the Infrastructure compose service
   `magicunicorn-tech` bind-mounts `/home/muut/fleet-public:/usr/share/nginx/html/fleet/data:ro`.
-- Adding a client name: edit `privacy.redact` / `privacy.replace` in `topology.json`, commit, push;
-  bigboy pulls before every run. Anything on the redact list that survives the reduce stops the push.
+- Adding a client name: edit `privacy.redact` / `privacy.replace` in `topology.json`, commit, push,
+  then `git pull --ff-only origin main` in bigboy `~/fleet-map` by hand — the service does NOT pull
+  (2026-10-11: the checkout had sat at a43327a for weeks while the push kept running). Anything on the redact list that survives the reduce stops the push.
