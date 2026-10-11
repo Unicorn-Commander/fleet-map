@@ -630,12 +630,13 @@ document.getElementById('bGlow').onclick=e=>{ glow=!glow; e.target.classList.tog
 document.getElementById('bGlow').classList.toggle('on',glow); if(glow) ensureBloom();
 window.render3D=render3D; window.hit3D=hit3D;
 let initView='3d'; try{ initView=localStorage.getItem('fleetmap-view')||'3d'; }catch(e){} if(QS.get('view')) initView=QS.get('view'); if(!['3d','graph','lanes','phys'].includes(initView)) initView='3d';
-// URL params (also handy for screenshots): ?view=graph|lanes|phys|3d  ?scope=host:<id>|layer:<id>|group:<host>:<cat>  ?expand=<host>,<host>&groups=1  ?left=0 ?right=0 ?present=1
+// URL params (also handy for screenshots): ?view=graph|lanes|phys|3d  ?scope=host:<id>|layer:<id>|group:<host>:<cat>  ?expand=<host>,<host>|all|off&groups=1  ?left=0 ?right=0 ?present=1
 //   ?layer=<layer id> (opens that scope)  ?host=<id>  ?net=1 (network gear in the fleet graph)  ?privacy=1|0  ?clients=0 (hide other LAN clients)  ?layer=agents (agents overlay) &agent=<id> (open that agent's pieces)
 if(NETPARAMS.get('layer')||NETPARAMS.get('host')) initView=NETPARAMS.get('view')==='3d'?'3d':'graph';
 if(NETPARAMS.has('privacy')){ privacy=NETPARAMS.get('privacy')==='1'; applyPriv(); } if(NETPARAMS.get('clients')==='0') showClients=false; if(NETPARAMS.get('net')==='1'&&NET){ showNet=true; for(const k of NETKINDS) kindOn[k]=true; syncKinds(); document.getElementById('bNet').classList.add('on'); }
 if(QS.get('scope')){ const [t,id]=QS.get('scope').split(':'); if(t==='host'&&F.hosts[id]) scope={type:'host',id}; else if(t==='layer'&&LIDX[id]!=null) scope={type:'layer',id}; else if(t==='group'&&F.hosts[id]) scope={type:'group',host:id,id:id+'::f::'+QS.get('scope').split(':').slice(2).join(':')}; }
-if(QS.get('expand')) for(const id of QS.get('expand').split(',')){ const h=F.hosts[id]; if(!h) continue; expandedHosts.add(id); if(QS.get('groups')==='1') for(const cats of Object.values(h.byLayer||{})) for(const cat of Object.keys(cats)) expandedGroups.add(id+'::f::'+cat); }
+const EXPAND_DEFAULT=''; // the public build sets 'all' (every host opened on load); ?expand=off overrides
+const exq=QS.get('expand')||EXPAND_DEFAULT; if(exq&&exq!=='off') for(const id of (exq==='all'?Object.keys(F.hosts).filter(id=>F.hosts[id].containers.length||(F.hosts[id].unit_items||[]).length):exq.split(','))){ const h=F.hosts[id]; if(!h) continue; expandedHosts.add(id); if(QS.get('groups')==='1') for(const cats of Object.values(h.byLayer||{})) for(const cat of Object.keys(cats)) expandedGroups.add(id+'::f::'+cat); }
 booted=true; setView(initView); crumbs(); if(scope.type==='host') detail(hNode(scope.id)); if(initView==='graph') setTimeout(fit,1200);
 if(NETPARAMS.get('layer')&&LIDX[NETPARAMS.get('layer')]!=null) openScope({type:'layer',id:NETPARAMS.get('layer')}); else if(NETPARAMS.get('host')&&F.hosts[NETPARAMS.get('host')]) openScope({type:'host',id:NETPARAMS.get('host')});
 if(agentsOn){ fitPending=true; setTimeout(fit,4500); const ag=NETPARAMS.get('agent'); if(ag) setTimeout(()=>{ const n=cur.nodes.find(x=>x.id==='agent:'+ag); if(n){ detail(n); if(view==='graph') highlight(n); } },600); }

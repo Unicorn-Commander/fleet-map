@@ -41,6 +41,8 @@ PATCHES = [
     ("ignore ?privacy=", re.escape("if(NETPARAMS.has('privacy')){ privacy=NETPARAMS.get('privacy')==='1'; applyPriv(); }"),
      "privacy=true; applyPriv();"),
     ("banner text", re.escape(BANNER_OLD), BANNER_NEW),
+    ("expand every host on load (?expand=off to collapse)", re.escape("const EXPAND_DEFAULT='';"),
+     "const EXPAND_DEFAULT='all';"),
 ]
 
 
