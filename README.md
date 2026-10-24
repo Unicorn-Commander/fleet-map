@@ -4,7 +4,7 @@
 
 Where a fleet's hosts, containers, routes, and agents actually run.
 
-[![AGPL-3.0-or-later](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 ![Python 3](https://img.shields.io/badge/Python-3-3776AB)
 ![D3 v7.9.0](https://img.shields.io/badge/D3-v7.9.0-F9A03C)
 ![Three.js r185](https://img.shields.io/badge/Three.js-r185-black)
@@ -377,7 +377,7 @@ Report a vulnerability in private. See [SECURITY.md](SECURITY.md). Do not open a
 
 ## Licence
 
-fleet-map is released under the GNU Affero General Public License v3.0 or later. The full text is in [LICENSE](LICENSE).
+fleet-map is licensed under the [Apache License 2.0](LICENSE). You can use, change and redistribute it, including commercially, under its terms. Our names and logos are covered by [TRADEMARKS.md](TRADEMARKS.md).
 
 <div align="center">
 
