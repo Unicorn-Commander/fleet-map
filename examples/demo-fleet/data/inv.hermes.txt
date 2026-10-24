@@ -1,0 +1,9 @@
+HOST=hermes
+OS=Ubuntu 24.04 LTS|KERN=6.8.0-demo|CPUS=16|MEM=64G
+IPS=198.51.100.22/24
+TS=192.0.2.207
+LISTEN=198.51.100.22:3000 198.51.100.22:8081
+UNITS=docker.service tailscaled.service
+C=ci-runner|demo/ci-runner:2.4|builds|{"com.docker.compose.service":"ci-runner","traefik.http.routers.ci.rule":"Host(`ci.fableworks.example`)"}|8081/tcp|healthy
+C=grafana|grafana/grafana:11|monitoring|{"com.docker.compose.service":"grafana","traefik.http.routers.ci-metrics.rule":"Host(`ci-metrics.fableworks.example`)"}|3000/tcp|healthy
+C=artifact-proxy|nginx:1.27|builds|{"com.docker.compose.service":"artifact-proxy","com.docker.compose.depends_on":"ci-runner"}|8080/tcp|healthy

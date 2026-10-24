@@ -1,0 +1,9 @@
+HOST=cloud-1
+OS=Debian 12|KERN=6.1.0-demo|CPUS=4|MEM=16G
+IPS=203.0.113.32/24
+TS=192.0.2.209
+LISTEN=203.0.113.32:8080 203.0.113.32:6379
+UNITS=docker.service tailscaled.service
+C=wiki|demo/wiki:4.2|apps|{"com.docker.compose.service":"wiki","traefik.http.routers.wiki.rule":"Host(`wiki.fableworks.example`)"}|8080/tcp|healthy
+C=status-page|demo/status-page:2.1|apps|{"com.docker.compose.service":"status-page","traefik.http.routers.status.rule":"Host(`status.fableworks.example`)"}|8080/tcp|healthy
+C=redis-cache|redis:7|data|{"com.docker.compose.service":"redis-cache"}|6379/tcp|healthy

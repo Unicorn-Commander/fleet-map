@@ -1,0 +1,10 @@
+HOST=edge-1
+OS=Ubuntu 24.04 LTS|KERN=6.8.0-demo|CPUS=8|MEM=32G
+IPS=198.51.100.21/24
+TS=192.0.2.206
+LISTEN=198.51.100.21:80 198.51.100.21:443 198.51.100.21:8088
+UNITS=docker.service tailscaled.service
+C=traefik|traefik:v3.1|edge|{"com.docker.compose.service":"traefik","traefik.http.routers.status.rule":"Host(`status.fableworks.example`)","traefik.http.routers.crm.rule":"Host(`crm.fableworks.example`)"}|80/tcp 443/tcp|healthy
+C=oauth2-proxy|oauth2-proxy/oauth2-proxy:v7.7|edge|{"com.docker.compose.service":"oauth2-proxy","com.docker.compose.depends_on":"traefik"}|4180/tcp|healthy
+C=status-page|demo/status-page:2.1|edge|{"com.docker.compose.service":"status-page","com.docker.compose.depends_on":"oauth2-proxy","traefik.http.routers.status.rule":"Host(`status.fableworks.example`)"}|8088/tcp|healthy
+R=/etc/traefik/dynamic.yml|Host(`legacy.fableworks.example`)|http://192.0.2.11:8080

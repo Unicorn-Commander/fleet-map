@@ -1,0 +1,13 @@
+HOST=atlas
+OS=Ubuntu 24.04 LTS|KERN=6.8.0-demo|CPUS=12|MEM=64G
+IPS=192.0.2.11/24
+TS=192.0.2.201
+LISTEN=192.0.2.11:80 192.0.2.11:443 192.0.2.11:5432 192.0.2.11:6379 192.0.2.11:8080
+UNITS=docker.service tailscaled.service
+C=traefik|traefik:v3.1|core|{"com.docker.compose.service":"traefik","traefik.http.routers.crm.rule":"Host(`crm.fableworks.example`)","traefik.http.routers.auth.rule":"Host(`auth.fableworks.example`)","traefik.http.routers.wiki.rule":"Host(`wiki.fableworks.example`)"}|80/tcp 443/tcp|healthy
+C=keycloak|keycloak:25|core|{"com.docker.compose.service":"keycloak","com.docker.compose.depends_on":"postgres,redis","traefik.http.routers.auth.rule":"Host(`auth.fableworks.example`)"}|8080/tcp|healthy
+C=crm-web|demo/crm-web:1.8|apps|{"com.docker.compose.service":"crm-web","com.docker.compose.depends_on":"keycloak,postgres","traefik.http.routers.crm.rule":"Host(`crm.fableworks.example`)"}|8080/tcp|healthy
+C=wiki|demo/wiki:4.2|apps|{"com.docker.compose.service":"wiki","com.docker.compose.depends_on":"postgres","traefik.http.routers.wiki.rule":"Host(`wiki.fableworks.example`)"}|8080/tcp|healthy
+C=postgres|postgres:16|core|{"com.docker.compose.service":"postgres"}|5432/tcp|healthy
+C=redis|redis:7|core|{"com.docker.compose.service":"redis"}|6379/tcp|healthy
+R=/etc/traefik/dynamic.yml|Host(`legacy.fableworks.example`)|http://192.0.2.11:8080

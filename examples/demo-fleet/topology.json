@@ -1,0 +1,152 @@
+{
+  "sites": {
+    "home-lab": {
+      "label": "Home lab — Example City",
+      "short": "Example City · home lab",
+      "color": "#3b82f6",
+      "geo": null
+    },
+    "colo": {
+      "label": "Colocation — Example DC",
+      "short": "Example DC · colocation",
+      "color": "#14b8a6",
+      "geo": null
+    },
+    "cloud": {
+      "label": "Cloud region — Example East",
+      "short": "Example East · cloud",
+      "color": "#a855f7",
+      "geo": null
+    }
+  },
+  "hosts": {
+    "atlas": {
+      "site": "home-lab",
+      "role": "Core applications, identity, and the home-lab ingress point.",
+      "aliases": ["atlas"],
+      "glyph": "tower",
+      "hardware": {"chassis": "12-core tower", "memory": "64 GB"},
+      "physical": {"building": "Example House", "room": "Lab", "rack_or_shelf": "Shelf A"}
+    },
+    "gpu-1": {
+      "site": "home-lab",
+      "role": "Primary local inference node for interactive workloads.",
+      "aliases": ["gpu-1"],
+      "glyph": "rack",
+      "models": ["Demo language model lane", "Embedding service"],
+      "hardware": {"chassis": "GPU tower", "memory": "96 GB", "accelerator": "24 GB GPU"},
+      "physical": {"building": "Example House", "room": "Lab", "rack_or_shelf": "Shelf B"}
+    },
+    "nas-1": {
+      "site": "home-lab",
+      "role": "Backups, object storage, and database snapshots.",
+      "aliases": ["nas-1"],
+      "glyph": "tower",
+      "hardware": {"chassis": "8-bay storage tower", "memory": "32 GB"},
+      "physical": {"building": "Example House", "room": "Utility room", "rack_or_shelf": "Rack 1U"}
+    },
+    "pi-1": {
+      "site": "home-lab",
+      "role": "Small monitoring node and local health-check probe.",
+      "aliases": ["pi-1"],
+      "glyph": "pi",
+      "hardware": {"chassis": "single-board computer", "memory": "8 GB"},
+      "physical": {"building": "Example House", "room": "Lab", "rack_or_shelf": "Shelf C"}
+    },
+    "laptop-dev": {
+      "site": "home-lab",
+      "role": "Developer workstation that joins the fleet when it is in use.",
+      "aliases": ["laptop-dev"],
+      "glyph": "laptop",
+      "hardware": {"chassis": "developer laptop", "memory": "32 GB"},
+      "physical": {"building": "Example House", "room": "Desk", "rack_or_shelf": "Mobile"}
+    },
+    "edge-1": {
+      "site": "colo",
+      "role": "Public ingress and status page edge in the colocation site.",
+      "aliases": ["edge-1"],
+      "glyph": "rack",
+      "hardware": {"chassis": "1U edge server", "memory": "32 GB"},
+      "physical": {"building": "Example DC", "room": "Row 3", "rack_or_shelf": "R03-U14"}
+    },
+    "hermes": {
+      "site": "colo",
+      "role": "CI runners, dashboards, and release coordination.",
+      "aliases": ["hermes"],
+      "glyph": "tower",
+      "hardware": {"chassis": "compact server", "memory": "64 GB"},
+      "physical": {"building": "Example DC", "room": "Row 3", "rack_or_shelf": "R03-U16"}
+    },
+    "gpu-2": {
+      "site": "cloud",
+      "role": "Burst inference capacity used when the local model lane is busy.",
+      "aliases": ["gpu-2"],
+      "glyph": "vps",
+      "models": ["Demo burst model lane"],
+      "hardware": {"chassis": "cloud GPU instance", "memory": "64 GB", "accelerator": "16 GB GPU"},
+      "physical": {"building": "Example East", "room": "Region pool", "rack_or_shelf": "Virtual"}
+    },
+    "cloud-1": {
+      "site": "cloud",
+      "role": "Cloud-hosted wiki and public status backend.",
+      "aliases": ["cloud-1"],
+      "glyph": "vps",
+      "hardware": {"chassis": "cloud VM", "memory": "16 GB"},
+      "physical": {"building": "Example East", "room": "Region pool", "rack_or_shelf": "Virtual"}
+    }
+  },
+  "externals": [
+    {"id": "cloud-dns", "label": "Cloud DNS", "site": "cloud", "icon": "☁️"},
+    {"id": "object-storage", "label": "Object storage", "site": "cloud", "icon": "🗄️"}
+  ],
+  "links": [
+    {"s": "cloud-dns", "t": "edge-1", "k": "edge", "l": "DNS and HTTPS entry"},
+    {"s": "edge-1", "t": "atlas", "k": "route", "l": "CRM and identity routes"},
+    {"s": "edge-1", "t": "cloud-1", "k": "route", "l": "Wiki and status routes"},
+    {"s": "atlas", "t": "hermes", "k": "auth", "l": "SSO for internal tools"},
+    {"s": "atlas", "t": "gpu-1", "k": "lane", "l": "Primary model inference"},
+    {"s": "gpu-1", "t": "gpu-2", "k": "lane", "l": "Burst inference failover"},
+    {"s": "atlas", "t": "nas-1", "k": "storage", "l": "Database snapshots"},
+    {"s": "hermes", "t": "nas-1", "k": "storage", "l": "CI artifacts and cache"},
+    {"s": "nas-1", "t": "object-storage", "k": "storage", "l": "Encrypted off-site backups"},
+    {"s": "laptop-dev", "t": "atlas", "k": "tailnet", "l": "Developer access"},
+    {"s": "pi-1", "t": "cloud-1", "k": "tailnet", "l": "Remote health checks"}
+  ],
+  "tailnetMembers": ["atlas", "gpu-1", "nas-1", "pi-1", "laptop-dev", "edge-1", "hermes", "gpu-2", "cloud-1"],
+  "lanMembers": ["atlas", "gpu-1", "nas-1", "pi-1", "laptop-dev"],
+  "layers": [
+    {"id": "network", "label": "Network / edge", "color": "#ef4444", "desc": "DNS, public entry, tailnet, and the local lab network"},
+    {"id": "ingress", "label": "Ingress / proxies", "color": "#f97316", "desc": "Traefik and public host routes"},
+    {"id": "identity", "label": "Identity / secrets", "color": "#eab308", "desc": "Keycloak and SSO"},
+    {"id": "apps", "label": "Applications", "color": "#60a5fa", "desc": "Customer-facing and internal applications"},
+    {"id": "ai", "label": "AI / inference", "color": "#a855f7", "desc": "Model servers and embedding lanes"},
+    {"id": "data", "label": "Data / storage", "color": "#94a3b8", "desc": "Databases, caches, and object storage"},
+    {"id": "media", "label": "Media / streams", "color": "#22d3ee", "desc": "Reserved for media services"},
+    {"id": "mail", "label": "Mail / outreach", "color": "#84cc16", "desc": "Reserved for mail services"},
+    {"id": "observability", "label": "Observability", "color": "#f472b6", "desc": "Metrics, dashboards, and health checks"},
+    {"id": "dev", "label": "Dev / CI", "color": "#14b8a6", "desc": "Build runners and release tooling"},
+    {"id": "platform", "label": "Platform (hardware · OS · runtime)", "color": "#64748b", "desc": "Hosts, operating systems, and runtimes"}
+  ],
+  "linkLayer": {
+    "edge": "network",
+    "tailnet": "network",
+    "lan": "network",
+    "route": "ingress",
+    "url": "ingress",
+    "auth": "identity",
+    "lane": "ai",
+    "stream": "media",
+    "mail": "mail",
+    "storage": "data",
+    "member": "platform",
+    "uplink": "network",
+    "wifi": "network"
+  },
+  "overlays": [],
+  "privacy": {
+    "desc": "Demo-safe mode: addresses and client identifiers are documentation values.",
+    "ownDomains": ["fableworks.example"],
+    "redact": [],
+    "replace": {}
+  }
+}
