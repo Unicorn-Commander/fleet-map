@@ -1,0 +1,9 @@
+HOST=gpu-2
+OS=Ubuntu 24.04 LTS|KERN=6.8.0-demo|CPUS=16|MEM=64G
+IPS=203.0.113.31/24
+TS=192.0.2.208
+GPU=Cloud GPU 16GB
+LISTEN=203.0.113.31:8000
+UNITS=docker.service tailscaled.service
+C=model-server|vllm/vllm-openai:v0.6.4|inference|{"com.docker.compose.service":"model-server"}|8000/tcp|healthy
+C=batch-worker|demo/batch-worker:1.3|inference|{"com.docker.compose.service":"batch-worker","com.docker.compose.depends_on":"model-server"}||healthy

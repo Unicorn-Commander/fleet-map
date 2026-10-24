@@ -1,0 +1,34 @@
+{
+  "_about": "Fictional people and services for the fleet-map demo.",
+  "kinds": [
+    {"id": "seat", "label": "Seat / runtime", "color": "#f5a623", "desc": "Where the person or process runs"},
+    {"id": "lane", "label": "Model lane", "color": "#a855f7", "desc": "Which model service answers"},
+    {"id": "memory", "label": "Memory / storage", "color": "#94a3b8", "desc": "Durable object storage"},
+    {"id": "tool", "label": "Tools", "color": "#38bdf8", "desc": "Applications the person uses"},
+    {"id": "channel", "label": "Channels", "color": "#84cc16", "desc": "Dashboards and surfaces"}
+  ],
+  "agents": [
+    {
+      "id": "mira-rowan",
+      "name": "Mira Rowan",
+      "role": "Fictional operations engineer for the demo fleet.",
+      "tier": "crew",
+      "seat": {"kind": "build console", "host": "hermes", "service": "ci-runner", "status": "live"},
+      "lanes": [{"model": "local demo model", "host": "gpu-1", "service": "model-server", "status": "live"}],
+      "memory": [{"store": "backup bucket", "host": "nas-1", "service": "minio", "status": "live"}],
+      "tools": [{"label": "CRM console", "host": "atlas", "service": "crm-web", "status": "live"}],
+      "channels": [{"label": "fleet dashboard", "host": "pi-1", "service": "grafana", "status": "live"}]
+    },
+    {
+      "id": "theo-vale",
+      "name": "Theo Vale",
+      "role": "Fictional data engineer who tests the burst lane.",
+      "tier": "crew",
+      "seat": {"kind": "developer laptop", "host": "laptop-dev", "status": "live"},
+      "lanes": [{"model": "burst demo model", "host": "gpu-2", "service": "model-server", "status": "configured"}],
+      "memory": [{"store": "wiki content", "host": "cloud-1", "service": "wiki", "status": "live"}],
+      "tools": [{"label": "CI console", "host": "hermes", "service": "ci-runner", "status": "live"}],
+      "channels": [{"label": "public status", "host": "edge-1", "service": "status-page", "status": "live"}]
+    }
+  ]
+}

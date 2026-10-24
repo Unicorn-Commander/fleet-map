@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
 """Build data.js for the fleet map from data/inv.*.txt + data/headscale-nodes.json + topology.json."""
-import json, re, glob, os, datetime, sys
+import argparse, json, re, glob, os, datetime, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
-D = os.path.join(HERE, "data")
-topo = json.load(open(os.path.join(HERE, "topology.json")))
+
+parser = argparse.ArgumentParser(description="Build a fleet-map data.js snapshot")
+parser.add_argument("--data-dir", default=HERE,
+                    help="directory containing topology.json and data/ (default: repository)")
+parser.add_argument("--out", default=os.path.join(HERE, "data.js"),
+                    help="output path for data.js (default: repository data.js)")
+args = parser.parse_args()
+DATA_ROOT = os.path.abspath(args.data_dir)
+D = os.path.join(DATA_ROOT, "data")
+OUT = args.out
+topo = json.load(open(os.path.join(DATA_ROOT, "topology.json")))
 
 # ---- headscale ----
 hs = {}
@@ -352,7 +361,7 @@ try:
         for p in a.get("pieces", []): pieces.append(piece(a, p.get("kind", "tool"), p.get("label", ""), p))
         pieces = [p for p in pieces if p]
         av = a.get("avatar")
-        if av and not os.path.exists(os.path.join(HERE, av)):
+        if av and not os.path.exists(os.path.join(DATA_ROOT, av)):
             print(f"agents: {a['id']} avatar missing: {av}", file=sys.stderr); av = None
         seat_host = (a.get("seat") or {}).get("host") or next((p["host"] for p in pieces if p["host"] in hosts), None)
         agents_out.append({"id": a["id"], "name": a["name"], "role": a.get("role", ""), "tier": a.get("tier", "crew"), "avatar": av,
@@ -372,6 +381,6 @@ out = {"generatedAt": datetime.datetime.now().astimezone().isoformat(timespec="s
        "sites": topo["sites"], "externals": topo["externals"], "links": topo["links"],
        "tailnetMembers": topo["tailnetMembers"], "layers": topo["layers"], "linkLayer": topo["linkLayer"], "overlays": topo["overlays"], "privacy": topo.get("privacy", {}), "lanMembers": topo["lanMembers"],
        "hosts": hosts, "containers": containers, "routes": routes, "network": network, "agents": agents_out, "agentKinds": AGENT_KINDS}
-open(os.path.join(HERE, "data.js"), "w").write("window.FLEET = " + json.dumps(out, indent=None) + ";\n")
+open(OUT, "w").write("window.FLEET = " + json.dumps(out, indent=None) + ";\n")
 print(f"data.js: {len(hosts)} hosts, {len(containers)} containers, {len(routes)} routes, "
       f"{sum(len(h['hostnames']) for h in hosts.values())} public hostnames")

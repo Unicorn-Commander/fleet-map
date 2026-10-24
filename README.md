@@ -163,6 +163,16 @@ python3 build.py
 
 Open <http://127.0.0.1:8765/>. `./serve.sh` serves this directory with `python3 -m http.server` on all interfaces, on port 8765. Pass another port as the first argument (`./serve.sh 8876`).
 
+### Try it with the demo fleet
+
+From the repository root, build and serve the fictional fleet with one command:
+
+```bash
+python3 build.py --data-dir examples/demo-fleet --out examples/demo-fleet/data.js && python3 -m http.server 8765 --directory examples/demo-fleet
+```
+
+Open <http://127.0.0.1:8765/index.html>.
+
 `build.py` writes `data.js` next to `index.html`. The page loads that file. A fresh clone has no collected inventory files, so the first build contains the committed hosts, sites, links, and agent roster, with no collected containers or units. `.gitignore` already excludes `data.js`. Leave it untracked. Even a topology-only build can contain addresses and names; collection adds live inventory details.
 
 The `topology.json` in this repository describes one particular fleet. Examples below use stand-in names (`node-a`, `gpu-1`). Put your own hosts in the file. Keep its `layers` and `overlays` arrays and its `linkLayer` object. The viewer reads those. Replace `sites`, `hosts`, `links`, `externals`, `tailnetMembers`, and `lanMembers`. Update `data/agents.json` so its pieces reference your hosts or externals.

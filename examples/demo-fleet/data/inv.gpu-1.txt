@@ -1,0 +1,9 @@
+HOST=gpu-1
+OS=Ubuntu 24.04 LTS|KERN=6.8.0-demo|CPUS=16|MEM=96G
+IPS=192.0.2.12/24
+TS=192.0.2.202
+GPU=Demo GPU 24GB;Demo GPU 24GB
+LISTEN=192.0.2.12:8000 192.0.2.12:9000
+UNITS=docker.service tailscaled.service nvidia-persistenced.service
+C=model-server|vllm/vllm-openai:v0.6.4|inference|{"com.docker.compose.service":"model-server"}|8000/tcp|healthy
+C=embed-server|demo/embed-server:1.4|inference|{"com.docker.compose.service":"embed-server","com.docker.compose.depends_on":"model-server"}|9000/tcp|healthy

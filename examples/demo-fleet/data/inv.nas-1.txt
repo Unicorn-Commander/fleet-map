@@ -1,0 +1,9 @@
+HOST=nas-1
+OS=Debian 12|KERN=6.1.0-demo|CPUS=8|MEM=32G
+IPS=192.0.2.13/24
+TS=192.0.2.203
+LISTEN=192.0.2.13:9000 192.0.2.13:5432
+UNITS=docker.service tailscaled.service smartd.service
+C=minio|minio/minio:RELEASE.2024-06-13|storage|{"com.docker.compose.service":"minio"}|9000/tcp|healthy
+C=postgres-replica|postgres:16|storage|{"com.docker.compose.service":"postgres-replica"}|5432/tcp|healthy
+C=backup-worker|restic/restic:0.17|maintenance|{"com.docker.compose.service":"backup-worker","com.docker.compose.depends_on":"minio"}||healthy

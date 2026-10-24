@@ -1,0 +1,9 @@
+HOST=pi-1
+OS=Raspberry Pi OS  Bookworm|KERN=6.6.0-demo|CPUS=4|MEM=8G
+IPS=192.0.2.14/24
+TS=192.0.2.204
+LISTEN=192.0.2.14:3000 192.0.2.14:9090
+UNITS=docker.service tailscaled.service node-exporter.service
+C=prometheus|prom/prometheus:v2.54|monitoring|{"com.docker.compose.service":"prometheus"}|9090/tcp|healthy
+C=node-exporter|prom/node-exporter:v1.8|monitoring|{"com.docker.compose.service":"node-exporter","com.docker.compose.depends_on":"prometheus"}|9100/tcp|healthy
+C=grafana|grafana/grafana:11|monitoring|{"com.docker.compose.service":"grafana","com.docker.compose.depends_on":"prometheus","traefik.http.routers.metrics.rule":"Host(`metrics.fableworks.example`)"}|3000/tcp|healthy

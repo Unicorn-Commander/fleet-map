@@ -1,0 +1,5 @@
+HOST=laptop-dev
+OS=Fedora 40|KERN=6.10.0-demo|CPUS=8|MEM=32G
+IPS=192.0.2.15/24
+TS=192.0.2.205
+UNITS=docker.service tailscaled.service
